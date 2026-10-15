@@ -1,0 +1,6 @@
+{
+  "name": "Orbitalis - 3D Molecular & Quantum Dynamics Workbench",
+  "description": "Interactive 3D molecular structure visualizer with real-time atomic bonding dynamics, complex orbital arrangements, VSEPR geometry, and chemical property calculations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
