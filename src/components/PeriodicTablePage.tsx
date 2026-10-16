@@ -7,23 +7,21 @@ import {
 } from '../services/periodicTableData';
 import {
   Search,
-  SlidersHorizontal,
   X,
-  ExternalLink,
   Atom,
   Flame,
   Zap,
   Layers,
   Sparkles,
-  Info,
   ArrowLeft,
   ChevronRight,
-  Maximize2,
+  Info,
 } from 'lucide-react';
 
 interface Props {
   onBackToWorkbench: () => void;
   onLoadMoleculeIn3D: (formula: string) => void;
+  onOpenAbout?: () => void;
 }
 
 type HeatmapMode = 'category' | 'electronegativity' | 'atomicRadius' | 'meltingPoint';
@@ -31,6 +29,7 @@ type HeatmapMode = 'category' | 'electronegativity' | 'atomicRadius' | 'meltingP
 export const PeriodicTablePage: React.FC<Props> = ({
   onBackToWorkbench,
   onLoadMoleculeIn3D,
+  onOpenAbout,
 }) => {
   const [selectedElement, setSelectedElement] = useState<PeriodicElement | null>(
     PERIODIC_ELEMENTS[0] // Hydrogen selected by default
@@ -39,6 +38,25 @@ export const PeriodicTablePage: React.FC<Props> = ({
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('all');
   const [heatmapMode, setHeatmapMode] = useState<HeatmapMode>('category');
   const [isInspectorOpen, setIsInspectorOpen] = useState(true);
+
+  // Split elements into Main Body, Lanthanides, and Actinides
+  const mainElements = useMemo(() => {
+    return PERIODIC_ELEMENTS.filter(
+      (el) => el.category !== 'lanthanide' && el.category !== 'actinide'
+    );
+  }, []);
+
+  const lanthanides = useMemo(() => {
+    return PERIODIC_ELEMENTS.filter((el) => el.category === 'lanthanide').sort(
+      (a, b) => a.number - b.number
+    );
+  }, []);
+
+  const actinides = useMemo(() => {
+    return PERIODIC_ELEMENTS.filter((el) => el.category === 'actinide').sort(
+      (a, b) => a.number - b.number
+    );
+  }, []);
 
   // Filter elements based on search and category
   const filteredElements = useMemo(() => {
@@ -135,19 +153,87 @@ export const PeriodicTablePage: React.FC<Props> = ({
     // Check if we have curated benchmark or construct formula
     const commonFormulas: Record<string, string> = {
       H: 'H2O',
+      He: 'He',
+      Li: 'LiH',
+      Be: 'BeH2',
+      B: 'BF3',
       C: 'CH4',
       N: 'NH3',
       O: 'H2O',
       F: 'SF6',
+      Ne: 'Ne',
+      Na: 'NaCl',
+      Mg: 'MgCl2',
+      Al: 'AlCl3',
+      Si: 'SiH4',
       P: 'PCl5',
       S: 'SF6',
       Cl: 'PCl5',
-      B: 'BF3',
+      Ar: 'Ar',
+      K: 'KCl',
+      Ca: 'CaCO3',
+      Ti: 'TiO2',
+      Cr: 'CrO3',
+      Mn: 'KMnO4',
+      Fe: 'Fe',
+      Cu: 'CuSO4',
+      Zn: 'ZnCl2',
       Br: 'C6H5Br',
+      Ag: 'AgNO3',
+      I: 'KI',
+      Xe: 'XeF4',
+      Pt: 'Cisplatin',
+      Au: 'AuCl3',
+      U: 'UF6',
     };
     const target = commonFormulas[symbol] || symbol;
     onLoadMoleculeIn3D(target);
     onBackToWorkbench();
+  };
+
+  const handleSelectElement = (el: PeriodicElement) => {
+    setSelectedElement(el);
+    setIsInspectorOpen(true);
+    if (typeof window !== 'undefined' && window.innerWidth < 1280) {
+      setTimeout(() => {
+        document.getElementById('element-inspector')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 50);
+    }
+  };
+
+  // Reusable tile renderer for both main grid and f-block rows
+  const renderElementTile = (el: PeriodicElement, customStyle: React.CSSProperties = {}) => {
+    const isSelected = selectedElement?.number === el.number;
+    const style = getTileStyle(el);
+
+    return (
+      <button
+        key={el.number}
+        onClick={() => handleSelectElement(el)}
+        style={{
+          ...style,
+          ...customStyle,
+        }}
+        className={`p-1 rounded-lg border text-center transition-all flex flex-col justify-between items-center h-14 relative cursor-pointer hover:scale-105 active:scale-95 hover:z-20 ${
+          isSelected ? 'ring-2 ring-blue-600 z-10 scale-105' : ''
+        }`}
+      >
+        <div className="w-full flex justify-between items-center text-[9px] font-mono leading-none px-0.5">
+          <span className="font-bold opacity-80">{el.number}</span>
+          <span className="opacity-70 text-[8px]">
+            {el.atomicMass.toFixed(1)}
+          </span>
+        </div>
+
+        <span className="text-sm font-bold font-mono tracking-tight leading-none">
+          {el.symbol}
+        </span>
+
+        <span className="text-[9px] truncate max-w-full font-medium opacity-90 leading-none">
+          {el.name}
+        </span>
+      </button>
+    );
   };
 
   return (
@@ -159,19 +245,29 @@ export const PeriodicTablePage: React.FC<Props> = ({
             <div className="flex items-center gap-3">
               <button
                 onClick={onBackToWorkbench}
-                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-2xs"
+                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-2xs cursor-pointer"
                 title="Return to 3D Molecular Workbench"
               >
                 <ArrowLeft className="w-4 h-4" />
                 <span>3D Workbench</span>
               </button>
+              {onOpenAbout && (
+                <button
+                  onClick={onOpenAbout}
+                  className="p-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-2xs cursor-pointer"
+                  title="About Orbitalis (Ideas, Vision, Mission, Ambitions)"
+                >
+                  <Info className="w-4 h-4 text-blue-600" />
+                  <span className="hidden sm:inline">About</span>
+                </button>
+              )}
               <div>
                 <div className="flex items-center gap-2">
                   <h1 className="text-lg font-bold tracking-tight text-slate-900">
                     Periodic Table of Elements
                   </h1>
                   <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                    Complete Reference & Properties
+                    All 118 Elements (Complete IUPAC)
                   </span>
                 </div>
                 <p className="text-xs text-slate-500">
@@ -187,7 +283,7 @@ export const PeriodicTablePage: React.FC<Props> = ({
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search element (e.g. Iron, Fe, 26)..."
+                  placeholder="Search element (e.g. Iron, Fe, 26, U)..."
                   className="w-full pl-8 pr-8 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 text-slate-800 font-medium"
                 />
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
@@ -236,7 +332,7 @@ export const PeriodicTablePage: React.FC<Props> = ({
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              All Categories
+              All (118 Elements)
             </button>
             {Object.entries(CATEGORY_COLORS).map(([catKey, catVal]) => {
               const isActive = activeCategoryFilter === catKey;
@@ -262,9 +358,39 @@ export const PeriodicTablePage: React.FC<Props> = ({
       {/* Main Content Area: Grid + Side Inspector */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
         {/* Periodic Table Grid View (8 cols on xl) */}
-        <div className="xl:col-span-8 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs overflow-x-auto">
-          <div className="min-w-[850px] space-y-4">
-            {/* Main 18x7 Grid */}
+        <div className="xl:col-span-8 bg-white p-3 sm:p-4 rounded-2xl border border-slate-200 shadow-xs overflow-x-auto">
+          {/* Mobile Swipe Hint Banner */}
+          <div className="xl:hidden mb-3 px-3 py-2 rounded-xl bg-blue-50/90 border border-blue-200 text-blue-900 text-xs flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <span>👉</span>
+              <span className="text-[11px] font-medium">Swipe horizontally to explore Groups 1–18 and f-block. Tap any element to view properties below.</span>
+            </div>
+            {selectedElement && (
+              <a
+                href="#element-inspector"
+                className="shrink-0 px-2.5 py-1 rounded-md bg-blue-600 text-white font-semibold text-[11px] active:bg-blue-700 transition-colors"
+              >
+                Inspect #{selectedElement.number} ↓
+              </a>
+            )}
+          </div>
+
+          <div className="min-w-[860px] space-y-4">
+            {/* Group Numbers Header (1-18) */}
+            <div
+              className="grid gap-1.5 text-center text-[10px] font-mono font-bold text-slate-400"
+              style={{
+                gridTemplateColumns: 'repeat(18, minmax(0, 1fr))',
+              }}
+            >
+              {Array.from({ length: 18 }, (_, i) => i + 1).map((grp) => (
+                <div key={grp} className="py-0.5">
+                  {grp}
+                </div>
+              ))}
+            </div>
+
+            {/* Main 18x7 Grid (Periods 1-7, Groups 1-18) */}
             <div
               className="grid gap-1.5"
               style={{
@@ -272,43 +398,86 @@ export const PeriodicTablePage: React.FC<Props> = ({
                 gridTemplateRows: 'repeat(7, minmax(0, 1fr))',
               }}
             >
-              {PERIODIC_ELEMENTS.map((el) => {
-                const isSelected = selectedElement?.number === el.number;
-                const style = getTileStyle(el);
+              {/* Main Body Elements */}
+              {mainElements.map((el) => {
                 const pos = getGridStyle(el);
-
-                return (
-                  <button
-                    key={el.number}
-                    onClick={() => {
-                      setSelectedElement(el);
-                      setIsInspectorOpen(true);
-                    }}
-                    style={{
-                      ...style,
-                      ...pos,
-                    }}
-                    className={`p-1 rounded-lg border text-center transition-all flex flex-col justify-between items-center h-14 relative cursor-pointer hover:scale-105 hover:z-20 ${
-                      isSelected ? 'ring-2 ring-blue-600 z-10 scale-105' : ''
-                    }`}
-                  >
-                    <div className="w-full flex justify-between items-center text-[9px] font-mono leading-none px-0.5">
-                      <span className="font-bold opacity-80">{el.number}</span>
-                      <span className="opacity-70 text-[8px]">
-                        {el.atomicMass.toFixed(1)}
-                      </span>
-                    </div>
-
-                    <span className="text-sm font-bold font-mono tracking-tight leading-none">
-                      {el.symbol}
-                    </span>
-
-                    <span className="text-[9px] truncate max-w-full font-medium opacity-90 leading-none">
-                      {el.name}
-                    </span>
-                  </button>
-                );
+                return renderElementTile(el, pos);
               })}
+
+              {/* Lanthanide Placeholder Marker (Period 6, Group 3) */}
+              <button
+                onClick={() => {
+                  const first = lanthanides[0];
+                  if (first) handleSelectElement(first);
+                }}
+                className={`p-1 rounded-lg border text-center transition-all flex flex-col justify-between items-center h-14 relative cursor-pointer hover:scale-105 active:scale-95 bg-fuchsia-50/70 border-fuchsia-200 text-fuchsia-800 hover:bg-fuchsia-100 ${
+                  selectedElement?.category === 'lanthanide' ? 'ring-2 ring-fuchsia-500 font-bold' : ''
+                }`}
+                style={{ gridRow: 6, gridColumn: 3 }}
+                title="View Lanthanides series (57-71)"
+              >
+                <span className="text-[9px] font-mono font-bold opacity-80">57–71</span>
+                <span className="text-xs font-bold font-mono tracking-tight">La–Lu</span>
+                <span className="text-[8px] truncate font-semibold uppercase">Lanthanides</span>
+              </button>
+
+              {/* Actinide Placeholder Marker (Period 7, Group 3) */}
+              <button
+                onClick={() => {
+                  const first = actinides[0];
+                  if (first) handleSelectElement(first);
+                }}
+                className={`p-1 rounded-lg border text-center transition-all flex flex-col justify-between items-center h-14 relative cursor-pointer hover:scale-105 active:scale-95 bg-rose-50/70 border-rose-200 text-rose-800 hover:bg-rose-100 ${
+                  selectedElement?.category === 'actinide' ? 'ring-2 ring-rose-500 font-bold' : ''
+                }`}
+                style={{ gridRow: 7, gridColumn: 3 }}
+                title="View Actinides series (89-103)"
+              >
+                <span className="text-[9px] font-mono font-bold opacity-80">89–103</span>
+                <span className="text-xs font-bold font-mono tracking-tight">Ac–Lr</span>
+                <span className="text-[8px] truncate font-semibold uppercase">Actinides</span>
+              </button>
+            </div>
+
+            {/* Inner Transition Elements (f-block Lanthanides & Actinides) */}
+            <div className="pt-4 mt-2 border-t border-slate-200 space-y-2.5">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-700 px-1">
+                <span className="flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-fuchsia-600" />
+                  <span>Inner Transition Elements (f-block Series)</span>
+                </span>
+                <span className="text-[11px] font-medium text-slate-400">
+                  Lanthanides (57–71) & Actinides (89–103)
+                </span>
+              </div>
+
+              {/* Lanthanide Row (57-71) */}
+              <div className="flex items-center gap-2">
+                <div className="w-24 shrink-0 text-right pr-2">
+                  <span className="text-[11px] font-bold text-fuchsia-800 block">Lanthanides</span>
+                  <span className="text-[9px] font-mono text-slate-400 block">57–71 (4f)</span>
+                </div>
+                <div
+                  className="flex-1 grid gap-1.5"
+                  style={{ gridTemplateColumns: 'repeat(15, minmax(0, 1fr))' }}
+                >
+                  {lanthanides.map((el) => renderElementTile(el))}
+                </div>
+              </div>
+
+              {/* Actinide Row (89-103) */}
+              <div className="flex items-center gap-2">
+                <div className="w-24 shrink-0 text-right pr-2">
+                  <span className="text-[11px] font-bold text-rose-800 block">Actinides</span>
+                  <span className="text-[9px] font-mono text-slate-400 block">89–103 (5f)</span>
+                </div>
+                <div
+                  className="flex-1 grid gap-1.5"
+                  style={{ gridTemplateColumns: 'repeat(15, minmax(0, 1fr))' }}
+                >
+                  {actinides.map((el) => renderElementTile(el))}
+                </div>
+              </div>
             </div>
 
             {/* Legend & Periodic Trends Summary */}
@@ -318,9 +487,11 @@ export const PeriodicTablePage: React.FC<Props> = ({
                 <span>Electronegativity increases ➔ and ⬆</span>
                 <span>·</span>
                 <span>Atomic radius increases ⬅ and ⬇</span>
+                <span>·</span>
+                <span>Ionization energy increases ➔ and ⬆</span>
               </div>
               <span className="text-[11px] text-slate-400">
-                Click any element to inspect complete physical, quantum & chemical properties
+                118 Elements Officially Verified (IUPAC)
               </span>
             </div>
           </div>
@@ -328,7 +499,7 @@ export const PeriodicTablePage: React.FC<Props> = ({
 
         {/* Right Pane: Element Properties Inspector (4 cols on xl) */}
         {selectedElement && isInspectorOpen && (
-          <div className="xl:col-span-4 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-5 sticky top-28">
+          <div id="element-inspector" className="xl:col-span-4 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm space-y-5 relative xl:sticky xl:top-24">
             {/* Header Identity */}
             <div className="flex items-start justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-3">
@@ -370,7 +541,7 @@ export const PeriodicTablePage: React.FC<Props> = ({
 
               <button
                 onClick={() => handleLaunch3D(selectedElement.symbol)}
-                className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors flex items-center gap-1"
+                className="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors flex items-center gap-1 cursor-pointer"
                 title="Visualize in 3D Molecular Workbench"
               >
                 <Atom className="w-3.5 h-3.5" />
@@ -391,7 +562,7 @@ export const PeriodicTablePage: React.FC<Props> = ({
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                   <span className="text-slate-400 text-[10px] block">Electron Configuration</span>
-                  <span className="font-mono font-bold text-slate-800 text-[11px] block mt-0.5 truncate">
+                  <span className="font-mono font-bold text-slate-800 text-[11px] block mt-0.5 truncate" title={selectedElement.electronConfiguration}>
                     {selectedElement.electronConfiguration}
                   </span>
                 </div>
@@ -480,7 +651,7 @@ export const PeriodicTablePage: React.FC<Props> = ({
 
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                   <span className="text-slate-400 text-[10px] block">Discovery</span>
-                  <span className="font-semibold text-slate-800 text-[11px] block mt-0.5 truncate" title={selectedElement.discoverer}>
+                  <span className="font-semibold text-slate-800 text-[11px] block mt-0.5 truncate" title={`${selectedElement.discoveryYear} by ${selectedElement.discoverer}`}>
                     {selectedElement.discoveryYear} ({selectedElement.discoverer})
                   </span>
                 </div>

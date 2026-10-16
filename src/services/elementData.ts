@@ -353,22 +353,55 @@ export const ELEMENTS: Record<string, ElementData> = {
   },
 };
 
+import { PERIODIC_ELEMENTS } from './periodicTableData';
+
 export function getElement(symbol: string): ElementData {
   const clean = symbol.charAt(0).toUpperCase() + symbol.slice(1).toLowerCase();
-  return (
-    ELEMENTS[clean] || {
-      symbol: clean,
-      name: clean,
-      atomicNumber: 0,
-      mass: 12.0,
-      electronegativity: 2.0,
-      valenceElectrons: 4,
-      covalentRadius: 0.8,
-      vdwRadius: 1.6,
-      cpkColor: '#94A3B8',
-      period: 2,
-      group: 14,
-      electronConfiguration: 'Unknown',
-    }
+  if (ELEMENTS[clean]) {
+    return ELEMENTS[clean];
+  }
+
+  // Lookup in comprehensive 118 periodic elements dataset
+  const found = PERIODIC_ELEMENTS.find(
+    (el) => el.symbol.toLowerCase() === clean.toLowerCase()
   );
+
+  if (found) {
+    // Estimate valence electrons based on group / block
+    let valence = 4;
+    if (found.group === 1) valence = 1;
+    else if (found.group === 2) valence = 2;
+    else if (found.group >= 13 && found.group <= 18) valence = found.group - 10;
+    else if (found.group >= 3 && found.group <= 12) valence = found.group;
+
+    return {
+      symbol: found.symbol,
+      name: found.name,
+      atomicNumber: found.number,
+      mass: found.atomicMass,
+      electronegativity: found.electronegativity || 2.0,
+      valenceElectrons: valence,
+      covalentRadius: (found.covalentRadius || 100) / 100, // pm -> Angstroms
+      vdwRadius: (found.vdwRadius || (found.atomicRadius ? found.atomicRadius * 1.5 : 150)) / 100,
+      cpkColor: found.cpkColor || '#94A3B8',
+      period: found.period,
+      group: found.group,
+      electronConfiguration: found.electronConfiguration,
+    };
+  }
+
+  return {
+    symbol: clean,
+    name: clean,
+    atomicNumber: 0,
+    mass: 12.0,
+    electronegativity: 2.0,
+    valenceElectrons: 4,
+    covalentRadius: 0.8,
+    vdwRadius: 1.6,
+    cpkColor: '#94A3B8',
+    period: 2,
+    group: 14,
+    electronConfiguration: 'Unknown',
+  };
 }

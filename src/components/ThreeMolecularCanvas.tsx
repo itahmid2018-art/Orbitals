@@ -17,6 +17,7 @@ import {
   createDz2OrbitalMesh,
   createDelocalizedPiClouds,
 } from '../services/orbitalGeometry';
+import { createEspMolecularSurface } from '../services/espCalculator';
 import {
   RotateCcw,
   Sun,
@@ -58,6 +59,38 @@ interface Props {
   onSelectAtom: (atomIndex: number) => void;
   onClearMeasurement: () => void;
   onAddCurrentAsReactant?: () => void;
+}
+
+// Helper to generate 2D planar circular atom tokens with high-contrast chemical symbols
+function createElementTextSprite(symbol: string, color: string, isSelected: boolean): THREE.Sprite {
+  const canvas = document.createElement('canvas');
+  canvas.width = 128;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.clearRect(0, 0, 128, 128);
+    // Outer circle with CPK color & white rim
+    ctx.beginPath();
+    ctx.arc(64, 64, 52, 0, Math.PI * 2);
+    ctx.fillStyle = isSelected ? '#0284c7' : color;
+    ctx.fill();
+    ctx.lineWidth = 6;
+    ctx.strokeStyle = '#ffffff';
+    ctx.stroke();
+
+    // High-contrast symbol text
+    const isLightBg = color.toLowerCase() === '#ffffff' || color.toLowerCase() === '#ffff30' || color.toLowerCase() === '#fff';
+    ctx.fillStyle = isLightBg ? '#0f172a' : '#ffffff';
+    ctx.font = 'bold 50px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(symbol, 64, 64);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  const mat = new THREE.SpriteMaterial({ map: texture, transparent: true, depthWrite: false });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(0.85, 0.85, 1);
+  return sprite;
 }
 
 export const ThreeMolecularCanvas: React.FC<Props> = ({
@@ -295,18 +328,53 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
     // Determine isolated atom index (if in isolation mode and user clicked an atom)
     const activeSelectedAtom = measurement.atoms.length > 0 ? measurement.atoms[0] : null;
 
+    // Check if 2D Planar ChemView Mode is active
+    const is2D = renderStyle === '2d_projected';
+
+    // Compute best-fit 2D planar projection along the thinnest variance axis for all atoms
+    let varX = 0, varY = 0, varZ = 0;
+    atoms.forEach((a) => {
+      const dx = a.x - cx;
+      const dy = a.y - cy;
+      const dz = a.z - cz;
+      varX += dx * dx;
+      varY += dy * dy;
+      varZ += dz * dz;
+    });
+
+    const smallestAxis = varZ <= varX && varZ <= varY ? 'z' : varX <= varY ? 'x' : 'y';
+    const pos2DMap = new Map<number, THREE.Vector3>();
+    atoms.forEach((atom, idx) => {
+      let px = atom.x - cx;
+      let py = atom.y - cy;
+      if (smallestAxis === 'x') {
+        px = atom.y - cy;
+        py = atom.z - cz;
+      } else if (smallestAxis === 'y') {
+        px = atom.x - cx;
+        py = atom.z - cz;
+      }
+      pos2DMap.set(idx, new THREE.Vector3(px, py, 0));
+    });
+
     // 1. Create Atom Meshes with Studio PBR Physical Shading
     atoms.forEach((atom, idx) => {
       const elem = getElement(atom.element);
-      const pos = new THREE.Vector3(atom.x - cx, atom.y - cy, atom.z - cz);
+      const pos = is2D
+        ? (pos2DMap.get(idx) || new THREE.Vector3(atom.x - cx, atom.y - cy, 0))
+        : new THREE.Vector3(atom.x - cx, atom.y - cy, atom.z - cz);
 
       let radius = 0.45;
       if (renderStyle === 'space_filling') {
         radius = elem.vdwRadius * 0.72;
+      } else if (renderStyle === 'esp_surface') {
+        radius = 0.25; // Compact core sphere inside the translucent ESP electron density envelope
       } else if (renderStyle === 'wireframe') {
         radius = 0.18;
       } else if (renderStyle === 'stick') {
         radius = 0.22;
+      } else if (is2D) {
+        radius = 0.42; // Flat planar circular token
       } else {
         radius = Math.max(0.3, elem.covalentRadius * 0.65);
       }
@@ -346,6 +414,13 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
       sphere.position.copy(pos);
       sphere.userData = { atomIndex: idx, atom, elementData: elem };
       molGroup.add(sphere);
+
+      // In 2D Planar ChemView mode, render an atomic symbol sprite badge
+      if (is2D && isIsolatedVisible) {
+        const sprite = createElementTextSprite(elem.symbol, elem.cpkColor, isSelected);
+        sprite.position.set(pos.x, pos.y, 0.08);
+        molGroup.add(sprite);
+      }
 
       atomMeshesRef.current.push({
         mesh: sphere,
@@ -429,13 +504,17 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
       const a2 = atoms[bond.targetIndex];
       if (!a1 || !a2) return;
 
-      const p1 = new THREE.Vector3(a1.x - cx, a1.y - cy, a1.z - cz);
-      const p2 = new THREE.Vector3(a2.x - cx, a2.y - cy, a2.z - cz);
+      const p1 = is2D
+        ? (pos2DMap.get(bond.sourceIndex) || new THREE.Vector3(a1.x - cx, a1.y - cy, 0))
+        : new THREE.Vector3(a1.x - cx, a1.y - cy, a1.z - cz);
+      const p2 = is2D
+        ? (pos2DMap.get(bond.targetIndex) || new THREE.Vector3(a2.x - cx, a2.y - cy, 0))
+        : new THREE.Vector3(a2.x - cx, a2.y - cy, a2.z - cz);
       const dist = p1.distanceTo(p2);
       const dir = p2.clone().sub(p1).normalize();
       const mid = p1.clone().add(p2).multiplyScalar(0.5);
 
-      const bondRadius = renderStyle === 'wireframe' ? 0.05 : renderStyle === 'stick' ? 0.12 : 0.09;
+      const bondRadius = is2D ? 0.08 : renderStyle === 'wireframe' ? 0.05 : renderStyle === 'stick' ? 0.12 : 0.09;
       const up = new THREE.Vector3(0, 1, 0);
       const quaternion = new THREE.Quaternion().setFromUnitVectors(up, dir);
 
@@ -528,7 +607,13 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
       });
     });
 
-    // 3. Dipole Moment Vector Arrow
+    // 3. Electrostatic Potential Map (ESP) Molecular Surface
+    if (renderStyle === 'esp_surface') {
+      const espSurface = createEspMolecularSurface(atoms, bonds, new THREE.Vector3(cx, cy, cz));
+      molGroup.add(espSurface);
+    }
+
+    // 4. Dipole Moment Vector Arrow
     if (showDipole && dipoleDebye > 0.1) {
       const arrowDir = new THREE.Vector3(0, 0, 1).normalize();
       const arrowLength = Math.min(3.5, 0.8 + dipoleDebye * 0.8);
@@ -657,6 +742,15 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
     if (isDraggingRef.current) {
       const deltaX = e.clientX - prevMousePosRef.current.x;
       const deltaY = e.clientY - prevMousePosRef.current.y;
+      prevMousePosRef.current = { x: e.clientX, y: e.clientY };
+
+      if (renderStyle === '2d_projected') {
+        if (moleculeGroupRef.current) {
+          moleculeGroupRef.current.position.x += deltaX * 0.015;
+          moleculeGroupRef.current.position.y -= deltaY * 0.015;
+        }
+        return;
+      }
 
       cameraSphericalRef.current.theta -= deltaX * 0.008;
       cameraSphericalRef.current.phi = Math.max(
@@ -664,7 +758,6 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
         Math.min(Math.PI - 0.05, cameraSphericalRef.current.phi - deltaY * 0.008)
       );
 
-      prevMousePosRef.current = { x: e.clientX, y: e.clientY };
       updateCameraPosition();
       return;
     }
@@ -724,6 +817,95 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
     }
   };
 
+  // Touch Orbit and Pinch Zoom Controls for Mobile & Tablet Viewports
+  const touchStartPosRef = useRef<{ x: number; y: number; time: number }>({ x: 0, y: 0, time: 0 });
+  const touchPinchDistRef = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      isDraggingRef.current = true;
+      const t = e.touches[0];
+      prevMousePosRef.current = { x: t.clientX, y: t.clientY };
+      touchStartPosRef.current = { x: t.clientX, y: t.clientY, time: Date.now() };
+      touchPinchDistRef.current = null;
+    } else if (e.touches.length === 2) {
+      isDraggingRef.current = false;
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      touchPinchDistRef.current = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 1 && isDraggingRef.current) {
+      const t = e.touches[0];
+      const deltaX = t.clientX - prevMousePosRef.current.x;
+      const deltaY = t.clientY - prevMousePosRef.current.y;
+
+      cameraSphericalRef.current.theta -= deltaX * 0.008;
+      cameraSphericalRef.current.phi = Math.max(
+        0.05,
+        Math.min(Math.PI - 0.05, cameraSphericalRef.current.phi - deltaY * 0.008)
+      );
+
+      prevMousePosRef.current = { x: t.clientX, y: t.clientY };
+      updateCameraPosition();
+    } else if (e.touches.length === 2 && touchPinchDistRef.current !== null) {
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const currentDist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+      const diff = touchPinchDistRef.current - currentDist;
+
+      const zoomFactor = diff * 0.05;
+      cameraSphericalRef.current.radius = Math.max(
+        3,
+        Math.min(60, cameraSphericalRef.current.radius + zoomFactor)
+      );
+      touchPinchDistRef.current = currentDist;
+      updateCameraPosition();
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (isDraggingRef.current && e.changedTouches.length > 0) {
+      const t = e.changedTouches[0];
+      const dist = Math.hypot(
+        t.clientX - touchStartPosRef.current.x,
+        t.clientY - touchStartPosRef.current.y
+      );
+      const elapsed = Date.now() - touchStartPosRef.current.time;
+
+      // If short tap with minimal finger movement (< 8px, < 350ms), raycast to select tapped atom
+      if (dist < 8 && elapsed < 350 && canvasRef.current && cameraRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        const mouse = new THREE.Vector2(
+          ((t.clientX - rect.left) / rect.width) * 2 - 1,
+          -((t.clientY - rect.top) / rect.height) * 2 + 1
+        );
+
+        const raycaster = new THREE.Raycaster();
+        raycaster.setFromCamera(mouse, cameraRef.current);
+
+        if (moleculeGroupRef.current) {
+          const atomSpheres = atomMeshesRef.current.map((a) => a.mesh);
+          const intersects = raycaster.intersectObjects(atomSpheres, false);
+          if (intersects.length > 0) {
+            const atomIndex = intersects[0].object.userData.atomIndex;
+            onSelectAtom(atomIndex);
+          }
+        }
+      }
+    }
+
+    if (e.touches.length === 0) {
+      isDraggingRef.current = false;
+      touchPinchDistRef.current = null;
+    } else if (e.touches.length === 1) {
+      const t = e.touches[0];
+      prevMousePosRef.current = { x: t.clientX, y: t.clientY };
+    }
+  };
+
   const handleResetCamera = () => {
     cameraSphericalRef.current = { radius: cameraDistanceRef.current, theta: Math.PI / 4, phi: Math.PI / 3 };
     updateCameraPosition();
@@ -738,13 +920,65 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
     link.click();
   };
 
+  // Sync fullscreen state with browser events and Escape key
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isFs = Boolean(document.fullscreenElement);
+      setIsFullscreen(isFs);
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isFullscreen) {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+        setIsFullscreen(false);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange);
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isFullscreen]);
+
+  // Adjust camera aspect ratio and renderer size when fullscreen toggles
+  useEffect(() => {
+    const updateSize = () => {
+      if (!containerRef.current || !rendererRef.current || !cameraRef.current) return;
+      const newW = containerRef.current.clientWidth || window.innerWidth;
+      const newH = containerRef.current.clientHeight || (isFullscreen ? window.innerHeight : 550);
+      cameraRef.current.aspect = newW / newH;
+      cameraRef.current.updateProjectionMatrix();
+      rendererRef.current.setSize(newW, newH);
+    };
+
+    const timer1 = setTimeout(updateSize, 40);
+    const timer2 = setTimeout(updateSize, 200);
+    return () => {
+      clearTimeout(timer1);
+      clearTimeout(timer2);
+    };
+  }, [isFullscreen]);
+
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch(() => {});
+    if (!document.fullscreenElement && !isFullscreen) {
+      if (containerRef.current.requestFullscreen) {
+        containerRef.current.requestFullscreen().catch(() => {
+          // If browser restricts fullscreen in iframe, fallback overlay handles it seamlessly
+        });
+      }
       setIsFullscreen(true);
     } else {
-      document.exitFullscreen().catch(() => {});
+      if (document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
       setIsFullscreen(false);
     }
   };
@@ -752,91 +986,115 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
   return (
     <div
       ref={containerRef}
-      className={`relative w-full h-full min-h-[550px] select-none rounded-2xl overflow-hidden border border-slate-200 transition-colors shadow-sm ${
+      className={`select-none overflow-hidden transition-all duration-200 ${
+        isFullscreen
+          ? 'fixed inset-0 z-50 w-screen h-screen rounded-none border-0 shadow-2xl'
+          : 'relative w-full h-full min-h-[380px] sm:min-h-[460px] lg:min-h-[550px] rounded-2xl border border-slate-200 shadow-sm'
+      } ${
         isDarkBg ? 'bg-[#0b1120] text-white' : 'bg-slate-50 text-slate-800'
       }`}
     >
       <canvas
         ref={canvasRef}
-        className="w-full h-full block cursor-grab active:cursor-grabbing"
+        className="w-full h-full block cursor-grab active:cursor-grabbing touch-none"
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
         onWheel={handleWheel}
         onClick={handleClick}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       />
 
       {/* Top Spec Badges */}
-      <div className="absolute top-3 left-3 flex items-center gap-2 z-10">
-        <div className="px-2.5 py-1 rounded-lg bg-slate-900/90 border border-slate-700/70 shadow-lg text-slate-200 text-xs flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-          <span className="font-semibold">Studio PBR</span>
-          <span className="text-slate-400 text-[10px]">ACES Tonemapped</span>
+      <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex flex-wrap items-center gap-1.5 z-10 max-w-[58%] sm:max-w-none">
+        <div className="px-2 sm:px-2.5 py-1 rounded-lg bg-slate-900/90 border border-slate-700/70 shadow-lg text-slate-200 text-[11px] sm:text-xs flex items-center gap-1.5 sm:gap-2">
+          <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+          <span className="font-semibold whitespace-nowrap">Studio PBR</span>
+          <span className="text-slate-400 text-[10px] hidden md:inline">ACES Tonemapped</span>
         </div>
 
-        {orbitalMode !== 'none' && (
-          <div className="px-2.5 py-1 rounded-lg bg-slate-900/90 border border-slate-700/70 shadow-lg text-xs flex items-center gap-2">
-            <Layers className="w-3.5 h-3.5 text-blue-400" />
-            <span className="text-slate-300">Phase:</span>
+        {renderStyle === 'esp_surface' ? (
+          <div className="px-2 sm:px-2.5 py-1 rounded-lg bg-slate-900/90 border border-amber-500/50 shadow-lg text-[11px] sm:text-xs flex items-center gap-1.5 sm:gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
+            <span className="font-semibold text-amber-300 whitespace-nowrap">ESP Surface</span>
+            <span className="text-slate-300 text-[10px] hidden sm:inline">Electron Density</span>
+          </div>
+        ) : orbitalMode !== 'none' ? (
+          <div className="px-2 sm:px-2.5 py-1 rounded-lg bg-slate-900/90 border border-slate-700/70 shadow-lg text-[11px] sm:text-xs flex items-center gap-1.5 sm:gap-2">
+            <Layers className="w-3.5 h-3.5 text-blue-400 shrink-0" />
+            <span className="text-slate-300 hidden sm:inline">Phase:</span>
             <span className="text-cyan-400 font-semibold">(+) Cyan</span>
             <span className="text-rose-400 font-semibold">(−) Coral</span>
+          </div>
+        ) : null}
+
+        {isFullscreen && (
+          <div className="px-2 sm:px-2.5 py-1 rounded-lg bg-blue-600/95 border border-blue-400/60 shadow-lg text-white text-[11px] sm:text-xs flex items-center gap-1.5 sm:gap-2">
+            <Maximize2 className="w-3.5 h-3.5 shrink-0" />
+            <span className="font-semibold whitespace-nowrap">Focus Mode</span>
+            <span className="text-blue-100 text-[10px] hidden md:inline">(Esc to exit)</span>
           </div>
         )}
       </div>
 
       {/* Top Right Quick Actions */}
-      <div className="absolute top-3 right-3 flex items-center gap-1.5 p-1.5 rounded-xl bg-slate-900/85 border border-slate-700/70 shadow-lg text-slate-200 z-10">
+      <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex items-center gap-1 p-1 sm:p-1.5 rounded-xl bg-slate-900/85 border border-slate-700/70 shadow-lg text-slate-200 z-10">
         <button
           onClick={handleResetCamera}
           title="Reset Camera Orientation"
-          className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+          className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
         >
-          <RotateCcw className="w-4 h-4" />
+          <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </button>
 
         <button
           onClick={() => setAutoRotate(!autoRotate)}
           title={autoRotate ? 'Pause Auto-Spin' : 'Auto-Spin Camera'}
-          className={`p-1.5 rounded-lg transition-colors ${
+          className={`p-1 sm:p-1.5 rounded-lg transition-colors ${
             autoRotate ? 'bg-blue-600 text-white' : 'hover:bg-slate-800 text-slate-300'
           }`}
         >
-          <Sparkles className="w-4 h-4" />
+          <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </button>
 
         <button
           onClick={() => setIsVibrating(!isVibrating)}
           title={isVibrating ? 'Pause Vibration' : 'Play Vibrational Dynamics'}
-          className={`p-1.5 rounded-lg transition-colors ${
+          className={`p-1 sm:p-1.5 rounded-lg transition-colors ${
             isVibrating ? 'bg-emerald-600 text-white' : 'hover:bg-slate-800 text-slate-300'
           }`}
         >
-          {isVibrating ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          {isVibrating ? <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
         </button>
 
         <button
           onClick={() => setIsDarkBg(!isDarkBg)}
           title={isDarkBg ? 'Switch to Lab Light Canvas' : 'Switch to Dark Slate Canvas'}
-          className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+          className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
         >
-          {isDarkBg ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          {isDarkBg ? <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
         </button>
 
         <button
           onClick={handleTakeSnapshot}
           title="Export High-Res PNG"
-          className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+          className="p-1 sm:p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
         >
-          <Camera className="w-4 h-4" />
+          <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
         </button>
 
         <button
           onClick={toggleFullscreen}
-          title="Toggle Fullscreen"
-          className="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition-colors"
+          title={isFullscreen ? 'Exit Full-Screen Focus (Esc)' : 'Full-Screen Focus Mode'}
+          aria-label={isFullscreen ? 'Exit Full-Screen Focus' : 'Full-Screen Focus Mode'}
+          className={`p-1 sm:p-1.5 rounded-lg transition-colors ${
+            isFullscreen ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400' : 'hover:bg-slate-800 text-slate-300 hover:text-white'
+          }`}
         >
-          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          {isFullscreen ? <Minimize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Maximize2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
         </button>
       </div>
 
@@ -870,6 +1128,52 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
           >
             Clear
           </button>
+        </div>
+      )}
+
+      {/* ESP Color Legend Floating HUD */}
+      {renderStyle === 'esp_surface' && (
+        <div
+          className={`absolute left-3 p-3 rounded-xl bg-slate-900/95 border border-slate-700/80 shadow-2xl text-xs z-10 w-72 backdrop-blur-sm transition-all ${
+            measurement.atoms.length > 0 ? 'top-28' : 'top-14'
+          }`}
+        >
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-slate-100 text-[11px]">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Electrostatic Potential Map (ESP)</span>
+            </div>
+            <span className="text-[10px] text-amber-400 font-mono font-semibold">V(r)</span>
+          </div>
+
+          {/* Gradient Bar: Red to Blue */}
+          <div
+            className="h-3 w-full rounded-md shadow-inner mb-1.5 border border-slate-700/60"
+            style={{
+              background: 'linear-gradient(to right, #ef4444 0%, #f59e0b 25%, #10b981 50%, #06b6d4 75%, #3b82f6 100%)',
+            }}
+          />
+
+          <div className="flex justify-between items-center text-[10px] font-medium mb-1.5">
+            <span className="text-red-400 font-bold">δ⁻ High Density</span>
+            <span className="text-emerald-400 font-semibold">Neutral</span>
+            <span className="text-blue-400 font-bold">δ⁺ Low Density</span>
+          </div>
+
+          <div className="border-t border-slate-800 pt-1.5 text-[10px] text-slate-400 space-y-0.5">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-red-500 shrink-0" />
+              <span>
+                <strong className="text-slate-200">Red:</strong> Nucleophilic / electron-rich region
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+              <span>
+                <strong className="text-slate-200">Blue:</strong> Electrophilic / electron-deficient region
+              </span>
+            </div>
+          </div>
         </div>
       )}
 
@@ -912,65 +1216,71 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
 
         {/* Dock Controls Container */}
         {!isDockCollapsed && (
-          <div className="p-3 rounded-2xl bg-slate-900/95 border border-slate-700/80 shadow-2xl text-slate-200 text-xs flex flex-wrap items-center justify-between gap-3">
+          <div className="p-2 sm:p-3 rounded-2xl bg-slate-900/95 border border-slate-700/80 shadow-2xl text-slate-200 text-xs flex flex-wrap items-center justify-between gap-2 sm:gap-3">
             {/* Style Pills */}
-            <div className="flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
-              <span className="text-[10px] font-bold uppercase text-slate-400 px-1.5">Style:</span>
-              {(['ball_and_stick', 'space_filling', 'stick', 'wireframe'] as RenderStyle[]).map((st) => (
+            <div className="flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 overflow-x-auto max-w-full">
+              <span className="text-[10px] font-bold uppercase text-slate-400 px-1 shrink-0">Style:</span>
+              {[
+                { id: 'ball_and_stick', label: 'Ball & Stick' },
+                { id: 'space_filling', label: 'vdW' },
+                { id: 'stick', label: 'Stick' },
+                { id: 'wireframe', label: 'Wire' },
+                { id: 'esp_surface', label: '⚡ ESP Map' },
+              ].map((item) => (
                 <button
-                  key={st}
-                  onClick={() => onChangeRenderStyle(st)}
-                  className={`px-2 py-1 rounded-lg text-[11px] font-medium transition-all ${
-                    renderStyle === st ? 'bg-blue-600 text-white font-semibold' : 'text-slate-300 hover:text-white'
+                  key={item.id}
+                  onClick={() => onChangeRenderStyle(item.id as RenderStyle)}
+                  className={`px-1.5 sm:px-2 py-1 rounded-lg text-[10px] sm:text-[11px] font-medium transition-all shrink-0 ${
+                    renderStyle === item.id ? 'bg-blue-600 text-white font-semibold' : 'text-slate-300 hover:text-white'
                   }`}
                 >
-                  {st === 'ball_and_stick' ? 'Ball & Stick' : st === 'space_filling' ? 'vdW' : st === 'stick' ? 'Stick' : 'Wire'}
+                  {item.label}
                 </button>
               ))}
             </div>
 
             {/* Orbitals selector */}
-            <div className="flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
-              <span className="text-[10px] font-bold uppercase text-slate-400 px-1.5">Orbitals:</span>
+            <div className="flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 shrink-0">
+              <span className="text-[10px] font-bold uppercase text-slate-400 px-1">Orbitals:</span>
               <button
                 onClick={() => onChangeOrbitalMode(orbitalMode === 'none' ? 'hybrid' : orbitalMode === 'hybrid' ? 'pi_delocalized' : orbitalMode === 'pi_delocalized' ? 'all' : 'none')}
-                className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-[11px] transition-colors"
+                className="px-2 sm:px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-[10px] sm:text-[11px] transition-colors whitespace-nowrap"
               >
-                {orbitalMode === 'none' ? 'Off' : orbitalMode === 'hybrid' ? 'Hybrid Lobes' : orbitalMode === 'pi_delocalized' ? 'π Clouds' : 'All Orbitals'}
+                {orbitalMode === 'none' ? 'Off' : orbitalMode === 'hybrid' ? 'Hybrid' : orbitalMode === 'pi_delocalized' ? 'π Clouds' : 'All'}
               </button>
             </div>
 
             {/* Zero-Occlusion Toggles */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
               <button
                 onClick={() => setIsXRayMode(!isXRayMode)}
                 title="Toggle Translucent X-Ray Shells for Zero Internal Occlusion"
-                className={`px-2.5 py-1 rounded-xl border text-[11px] font-medium transition-colors flex items-center gap-1.5 ${
+                className={`px-2 sm:px-2.5 py-1 rounded-xl border text-[10px] sm:text-[11px] font-medium transition-colors flex items-center gap-1 sm:gap-1.5 ${
                   isXRayMode
                     ? 'bg-cyan-600/90 text-white border-cyan-500 shadow-sm'
                     : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
                 }`}
               >
-                <Eye className="w-3.5 h-3.5" />
-                <span>X-Ray Shell</span>
+                <Eye className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span>X-Ray</span>
               </button>
 
               <button
                 onClick={() => setIsIsolationMode(!isIsolationMode)}
                 title="Isolate Active Atom's Coordination Sphere (Dimm peripheral atoms)"
-                className={`px-2.5 py-1 rounded-xl border text-[11px] font-medium transition-colors flex items-center gap-1.5 ${
+                className={`px-2 sm:px-2.5 py-1 rounded-xl border text-[10px] sm:text-[11px] font-medium transition-colors flex items-center gap-1 sm:gap-1.5 ${
                   isIsolationMode
                     ? 'bg-purple-600/90 text-white border-purple-500 shadow-sm'
                     : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
                 }`}
               >
-                <Focus className="w-3.5 h-3.5" />
+                <Focus className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                 <span>Isolate</span>
               </button>
 
               <button
                 onClick={() => onToggleDipole(!showDipole)}
-                className={`px-2.5 py-1 rounded-xl border text-[11px] font-medium transition-colors ${
+                className={`px-2 sm:px-2.5 py-1 rounded-xl border text-[10px] sm:text-[11px] font-medium transition-colors ${
                   showDipole ? 'bg-emerald-600/90 text-white border-emerald-500' : 'bg-slate-800 text-slate-400 border-slate-700'
                 }`}
               >

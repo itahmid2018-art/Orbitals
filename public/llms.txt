@@ -1,0 +1,36 @@
+# Orbitalis - 3D Molecular & Quantum Dynamics Workbench
+> Interactive 3D molecular structure visualizer with real-time atomic bonding dynamics, complex orbital arrangements, VSEPR geometry, full 118-element IUPAC periodic table, and chemical property calculations.
+
+## Overview
+Orbitalis is an advanced chemistry and molecular visualization workbench designed for students, researchers, biochemists, and educators. It combines real-time WebGL/Three.js 3D rendering with exact stoichiometric mass algorithms, VSEPR geometry analysis, PubChem compound lookup, and an IUPAC-standard periodic table covering all 118 chemical elements from Hydrogen (Z=1) to Oganesson (Z=118).
+
+## Key Capabilities & Modules
+- **Interactive 3D Molecular Canvas**:
+  - WebGL/Three.js hardware-accelerated ball-and-stick, space-filling (van der Waals), and electron cloud visualization.
+  - Full-screen immersion mode with HUD controls.
+  - Real-time bond vector computation, covalent radius collision detection, and rotational inertia physics.
+- **Complete Periodic Table of Elements (1-18)**:
+  - Full coverage of all 118 elements according to IUPAC standards.
+  - Dedicated f-block subgrids for Lanthanides (57-71, La–Lu) and Actinides (89-103, Ac–Lr).
+  - Search and filter by category (alkali metal, alkaline earth, transition metal, lanthanide, actinide, noble gas, reactive nonmetal, metalloid).
+  - Physical properties: exact atomic weight, electron configuration, electronegativity (Pauling scale), covalent radius, ionization energy, melting point, boiling point, density, year discovered, and discoverer.
+- **Stoichiometric Mass & Elemental Breakdown**:
+  - Live calculated molecular weight with standard atomic weights.
+  - Elemental percentage by weight ($w_i = (n_i \times M_i / M_{total}) \times 100\%$).
+  - Stoichiometric sum formula display and empirical ratio derivation.
+  - One-click clipboard export for laboratory reports and notebooks.
+- **Fast AMP & HTMX Hypermedia Mode**:
+  - Instant mobile-first AMP edition (`/amp.html`) with zero-render latency.
+  - HTMX hypermedia live element query and molecular mass calculator for low-bandwidth environments.
+
+## API & Data Endpoints
+- `/amp.html`: Google AMP validated mobile quick-reference page with HTMX fast query.
+- `/?view=elements`: Interactive periodic table view.
+- `/?view=molecules`: Curated molecule catalog (water, caffeine, benzene, aspirin, glucose, ethanol, ATP, etc.).
+- `/?view=about`: About page (project ideas, vision, mission, features, and future ambitions).
+- `/manifest.json`: Progressive Web App (PWA) manifest with multi-resolution icons for Android, iOS, and desktop web.
+
+## Canonical URLs
+- Primary Applet: `/`
+- AMP Alternative: `/amp.html`
+- Technical Documentation: `/llms-full.txt`

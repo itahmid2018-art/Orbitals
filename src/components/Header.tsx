@@ -8,6 +8,7 @@ import {
   Zap,
   BookOpen,
   Table,
+  Info,
 } from 'lucide-react';
 import { ChemicalProperties } from '../types/chemistry';
 
@@ -19,6 +20,7 @@ interface Props {
   onOpenReactionPredictor: () => void;
   onOpenTutorials: () => void;
   onOpenPeriodicTable: () => void;
+  onOpenAbout: () => void;
 }
 
 const QUICK_EXAMPLES = [
@@ -43,6 +45,7 @@ export const Header: React.FC<Props> = ({
   onOpenReactionPredictor,
   onOpenTutorials,
   onOpenPeriodicTable,
+  onOpenAbout,
 }) => {
   const [inputVal, setInputVal] = useState('');
 
@@ -99,29 +102,31 @@ export const Header: React.FC<Props> = ({
             <button
               onClick={onOpenPeriodicTable}
               title="Open full interactive Periodic Table of Elements"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 transition-colors shadow-2xs"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 transition-colors shadow-2xs active:scale-95"
             >
-              <Table className="w-3.5 h-3.5 text-teal-600" />
-              <span>Periodic Table</span>
+              <Table className="w-3.5 h-3.5 text-teal-600 shrink-0" />
+              <span className="hidden xs:inline sm:inline">Periodic Table</span>
+              <span className="xs:hidden">Table</span>
             </button>
 
             {/* Reaction Predictor Trigger */}
             <button
               onClick={onOpenReactionPredictor}
               title="Predict chemical reactions and mechanisms"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors shadow-2xs"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors shadow-2xs active:scale-95"
             >
-              <Zap className="w-3.5 h-3.5 text-indigo-600" />
-              <span>Reaction Predictor</span>
+              <Zap className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+              <span className="hidden xs:inline sm:inline">Reactions</span>
+              <span className="xs:hidden">React</span>
             </button>
 
             {/* Tutorials & Library Trigger */}
             <button
               onClick={onOpenTutorials}
               title="Guided Step-by-Step Tutorials & Example Library"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-colors shadow-2xs"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-colors shadow-2xs active:scale-95"
             >
-              <BookOpen className="w-3.5 h-3.5 text-emerald-600" />
+              <BookOpen className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
               <span>Tutorials</span>
             </button>
 
@@ -129,11 +134,32 @@ export const Header: React.FC<Props> = ({
             <button
               onClick={onOpenVseprGuide}
               title="VSEPR & Lewis Structure Solver"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 transition-colors"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 transition-colors active:scale-95 cursor-pointer"
             >
-              <HelpCircle className="w-3.5 h-3.5 text-blue-600" />
-              <span className="hidden sm:inline">VSEPR</span>
+              <HelpCircle className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <span>VSEPR</span>
             </button>
+
+            {/* About Page Trigger */}
+            <button
+              onClick={onOpenAbout}
+              title="About Orbitalis (Ideas, Vision, Mission & Roadmap)"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 transition-colors shadow-2xs active:scale-95 cursor-pointer"
+            >
+              <Info className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <span>About</span>
+            </button>
+
+            {/* Fast AMP & HTMX Mode Link */}
+            <a
+              href="/amp.html"
+              title="Ultra-fast AMP & HTMX Accelerated Mobile Edition"
+              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition-colors shadow-2xs active:scale-95"
+            >
+              <span className="text-amber-600 font-bold">⚡</span>
+              <span className="hidden sm:inline">AMP & HTMX</span>
+              <span className="sm:hidden">AMP</span>
+            </a>
           </div>
         </div>
 

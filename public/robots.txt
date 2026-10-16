@@ -1,0 +1,36 @@
+# Robots.txt for Orbitalis 3D Molecular Workbench
+# Optimized for standard web search crawlers and AI / LLM search engines
+
+User-agent: *
+Allow: /
+Disallow: /api/proxy/
+
+# Explicitly enable AI Search Agents & LLM Grounding Crawlers
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Sitemap & LLM Knowledge Files
+Sitemap: /sitemap.xml
+Sitemap: /amp.html
+
+# AI Machine-Readable Specification
+# https://llmstxt.org/
+# LLMs.txt provides structured context for AI agents & Generative Engine Optimization (GEO)

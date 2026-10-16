@@ -89,7 +89,7 @@ export interface VibrationalMode {
   displacements?: { x: number; y: number; z: number }[];
 }
 
-export type RenderStyle = 'ball_and_stick' | 'space_filling' | 'stick' | 'wireframe' | 'surface';
+export type RenderStyle = 'ball_and_stick' | 'space_filling' | 'stick' | 'wireframe' | 'surface' | 'esp_surface' | '2d_projected';
 
 export type OrbitalVisualizationMode = 
   | 'none' 

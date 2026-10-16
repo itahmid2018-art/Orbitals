@@ -46,13 +46,14 @@ export const OrbitalControls: React.FC<Props> = ({
             { id: 'space_filling', label: 'Space-Filling (vdW)' },
             { id: 'stick', label: 'Stick Model' },
             { id: 'wireframe', label: 'Wireframe Skeleton' },
+            { id: 'esp_surface', label: '⚡ ESP Density Map' },
           ].map((style) => (
             <button
               key={style.id}
               onClick={() => onChangeRenderStyle(style.id as RenderStyle)}
               className={`p-2 rounded-lg border text-left font-medium transition-all ${
                 renderStyle === style.id
-                  ? 'border-blue-600 bg-blue-50/70 text-blue-900 shadow-2xs'
+                  ? 'border-blue-600 bg-blue-50/70 text-blue-900 shadow-2xs font-semibold'
                   : 'border-slate-200 hover:bg-slate-50 text-slate-700'
               }`}
             >

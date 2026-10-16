@@ -2,20 +2,147 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+    
+    <!-- Primary Metadata -->
     <title>Orbitalis - 3D Molecular & Quantum Dynamics Workbench</title>
     <meta name="description" content="Interactive 3D molecular structure visualizer with real-time atomic bonding dynamics, complex orbital arrangements, VSEPR geometry, and chemical property calculations." />
+    <!-- Canonical URL resolved dynamically for SPA -->
+    <script>
+      (function() {
+        var link = document.createElement('link');
+        link.rel = 'canonical';
+        link.href = window.location.origin + window.location.pathname;
+        document.head.appendChild(link);
+      })();
+    </script>
+
+    <!-- AMP Alternative Link for Instant Mobile Loading -->
+    <link rel="amphtml" href="/amp.html" />
+    
+    <!-- Theme & Mobile App Operating System Meta -->
+    <meta name="theme-color" content="#0b1120" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Orbitalis" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Microsoft Windows Tiles & Edge Meta -->
+    <meta name="msapplication-config" content="/browserconfig.xml" />
+    <meta name="msapplication-TileColor" content="#0b1120" />
+    <meta name="msapplication-TileImage" content="/mstile-150x150.png" />
+
+    <!-- Search Engine & AI Crawler Directives (GEO / AI SEO) -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow" />
+    <meta name="ai:summary" content="Orbitalis is an interactive 3D chemistry workbench with real-time molecular dynamics, exact IUPAC atomic weights for all 118 elements, live elemental mass composition breakdown, and VSEPR geometries." />
+
+    <!-- Cross-Platform Favicons Suite (Android, iOS Safari, Web, Desktop) -->
+    <!-- Vector SVG Favicon for High-DPI & Modern Browsers -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Standard Desktop Favicons (Multi-Resolution) -->
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48x48.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <!-- Apple Touch Icons for iOS iPhone, iPad & iPad Pro -->
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/apple-touch-icon-167x167.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <!-- Safari Pinned Tab Vector Mask -->
+    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#0ea5e9" />
+    <!-- Web App Manifest for Android & Mobile PWA Installation -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- OpenGraph & Twitter Social Cards -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="/" />
     <meta property="og:title" content="Orbitalis - 3D Molecular & Quantum Dynamics Workbench" />
     <meta property="og:description" content="Interactive 3D molecular structure visualizer with real-time atomic bonding dynamics, complex orbital arrangements, VSEPR geometry, and chemical property calculations." />
-    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/pwa-512x512.png" />
+    <meta property="og:image:width" content="512" />
+    <meta property="og:image:height" content="512" />
+    <meta property="og:site_name" content="Orbitalis" />
+    <meta property="og:locale" content="en_US" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Orbitalis - 3D Molecular & Quantum Dynamics Workbench" />
+    <meta name="twitter:description" content="Interactive 3D molecular structure visualizer with real-time atomic bonding dynamics, complex orbital arrangements, VSEPR geometry, and chemical property calculations." />
+    <meta name="twitter:image" content="/pwa-512x512.png" />
+
+    <!-- Web Typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- HTMX for Faster Load Times & Hypermedia Boost -->
+    <script defer src="/htmx.min.js"></script>
+
+    <!-- Schema.org Knowledge Graph (Optimized for AI Search Engines & LLMs) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": "/#app",
+          "name": "Orbitalis",
+          "url": "/",
+          "applicationCategory": "EducationalApplication",
+          "operatingSystem": "All (Web, iOS, Android, macOS, Windows, Linux)",
+          "description": "Interactive 3D molecular structure visualizer with real-time atomic bonding dynamics, complex orbital arrangements, VSEPR geometry, and chemical property calculations.",
+          "browserRequirements": "Requires WebGL for 3D visualization",
+          "softwareVersion": "2.4.0",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }
+        },
+        {
+          "@type": "Dataset",
+          "@id": "/#dataset-periodic-table",
+          "name": "IUPAC Periodic Table of Elements (All 118 Elements)",
+          "description": "Comprehensive chemistry reference dataset encompassing all 118 elements from Hydrogen to Oganesson, including Lanthanides and Actinides with exact atomic masses, electronegativities, and electron configurations.",
+          "license": "https://creativecommons.org/publicdomain/zero/1.0/"
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is Orbitalis and how does it visualize molecules in 3D?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Orbitalis is an interactive WebGL and Three.js chemistry workbench that renders atomic structures in real time using ball-and-stick, space-filling (van der Waals), and electron orbital cloud representations with full-screen focus and dynamic bonding physics."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How does Orbitalis calculate molecular weight and elemental composition?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Orbitalis analyzes the active molecular formula or 3D atom graph and computes the total molecular weight as the sum of IUPAC standard atomic masses. It generates a stoichiometric breakdown with element mass fractions, percentages, and CPK color-coded charts."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does Orbitalis support mobile devices and AMP fast-loading?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Yes, Orbitalis is fully responsive on iOS and Android with custom PWA icons, touch gestures, and an ultra-fast AMP & HTMX mobile alternative available at /amp.html for instant sub-50ms data access."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
   </head>
-  <body>
+  <body hx-boost="true">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
-

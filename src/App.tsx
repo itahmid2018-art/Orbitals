@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Atom3D,
   Bond3D,
@@ -16,6 +16,7 @@ import {
   generateVSEPRCoordinates,
 } from './services/chemistryEngine';
 import { TutorialStep } from './services/guidedTutorials';
+import { LabNoteSnapshot } from './types/notebook';
 import { Header } from './components/Header';
 import { ThreeMolecularCanvas } from './components/ThreeMolecularCanvas';
 import { PropertyInspector } from './components/PropertyInspector';
@@ -25,6 +26,8 @@ import { VSEPRSolverModal } from './components/VSEPRSolverModal';
 import { ReactionPredictorModal } from './components/ReactionPredictorModal';
 import { TutorialGuideModal } from './components/TutorialGuideModal';
 import { PeriodicTablePage } from './components/PeriodicTablePage';
+import { AboutPage } from './components/AboutPage';
+import { LabNotebook } from './components/LabNotebook';
 import {
   Sparkles,
   Layers,
@@ -34,8 +37,8 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  // Navigation: 'workbench' | 'periodic-table'
-  const [currentPage, setCurrentPage] = useState<'workbench' | 'periodic-table'>('workbench');
+  // Navigation: 'workbench' | 'periodic-table' | 'about'
+  const [currentPage, setCurrentPage] = useState<'workbench' | 'periodic-table' | 'about'>('workbench');
 
   // Molecular state
   const [currentFormula, setCurrentFormula] = useState('H2O');
@@ -152,6 +155,28 @@ export default function App() {
     }
   };
 
+  // Support deep links from AMP, sitemap, PWA shortcuts, and AI crawlers (?view=elements, ?molecule=caffeine, ?element=Fe)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const view = params.get('view');
+      const molecule = params.get('molecule');
+      const element = params.get('element');
+
+      if (view === 'elements' || view === 'periodic-table') {
+        setCurrentPage('periodic-table');
+      } else if (view === 'about') {
+        setCurrentPage('about');
+      } else if (molecule) {
+        loadMolecule(molecule);
+      } else if (element) {
+        loadMolecule(element);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   // Programmatic Tutorial step application to sync 3D viewport
   const handleApplyTutorialStep = (step: TutorialStep) => {
     if (step.formula.toUpperCase() !== currentFormula.toUpperCase()) {
@@ -223,11 +248,37 @@ export default function App() {
     setMeasurement({ atoms: [] });
   };
 
+  // Restore snapshot state from lab notebook
+  const handleRestoreSnapshot = (snapshot: LabNoteSnapshot, formula: string) => {
+    if (formula.toUpperCase() !== currentFormula.toUpperCase()) {
+      loadMolecule(formula);
+    }
+    setOrbitalMode(snapshot.orbitalMode);
+    setRenderStyle(snapshot.renderStyle);
+    setTemperatureK(snapshot.temperatureK);
+    if (snapshot.activeVibrationalModeName) {
+      const found = vibrationalModes.find((m) => m.name === snapshot.activeVibrationalModeName);
+      if (found) setActiveVibrationalMode(found);
+    }
+  };
+
   // If on Periodic Table independent page
   if (currentPage === 'periodic-table') {
     return (
       <PeriodicTablePage
         onBackToWorkbench={() => setCurrentPage('workbench')}
+        onLoadMoleculeIn3D={loadMolecule}
+        onOpenAbout={() => setCurrentPage('about')}
+      />
+    );
+  }
+
+  // If on About independent page
+  if (currentPage === 'about') {
+    return (
+      <AboutPage
+        onBackToWorkbench={() => setCurrentPage('workbench')}
+        onOpenPeriodicTable={() => setCurrentPage('periodic-table')}
         onLoadMoleculeIn3D={loadMolecule}
       />
     );
@@ -244,6 +295,7 @@ export default function App() {
         onOpenReactionPredictor={() => setIsReactionModalOpen(true)}
         onOpenTutorials={() => setIsTutorialModalOpen(true)}
         onOpenPeriodicTable={() => setCurrentPage('periodic-table')}
+        onOpenAbout={() => setCurrentPage('about')}
       />
 
       {/* Error alert banner if any */}
@@ -264,10 +316,26 @@ export default function App() {
         </div>
       )}
 
+      {/* Mobile Quick Navigation Anchor Bar */}
+      <div className="lg:hidden max-w-7xl mx-auto px-4 sm:px-6 pt-2 w-full flex items-center justify-between gap-2">
+        <a
+          href="#canvas-section"
+          className="flex-1 py-1.5 px-3 rounded-lg bg-white border border-slate-200 text-center text-xs font-semibold text-slate-700 shadow-2xs active:bg-slate-100 transition-colors"
+        >
+          🔬 3D Canvas
+        </a>
+        <a
+          href="#inspector-section"
+          className="flex-1 py-1.5 px-3 rounded-lg bg-white border border-slate-200 text-center text-xs font-semibold text-blue-700 shadow-2xs active:bg-blue-50 transition-colors"
+        >
+          📊 Inspector & Notebook
+        </a>
+      </div>
+
       {/* Main Dual-Pane Scientific Workbench */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Pane: Studio PBR Three.js Molecular Canvas (7 cols on lg) */}
-        <div className="lg:col-span-7 xl:col-span-7 flex flex-col gap-3 h-[620px] lg:h-[750px] sticky top-28">
+        <div id="canvas-section" className="lg:col-span-7 xl:col-span-7 flex flex-col gap-3 h-[400px] sm:h-[490px] lg:h-[740px] relative lg:sticky lg:top-24">
           <ThreeMolecularCanvas
             atoms={atoms}
             bonds={bonds}
@@ -291,7 +359,7 @@ export default function App() {
           />
 
           {/* Quick status bar beneath canvas */}
-          <div className="flex items-center justify-between text-xs text-slate-500 px-1">
+          <div className="flex flex-wrap items-center justify-between text-xs text-slate-500 px-1 gap-1">
             <div className="flex items-center gap-2">
               <span className="font-mono text-slate-700 font-semibold">{atoms.length} Atoms</span>
               <span>·</span>
@@ -300,13 +368,25 @@ export default function App() {
               <span className="font-mono text-slate-700">{properties?.vsepr?.molecularShape}</span>
             </div>
             <span className="text-[11px] text-slate-400">
-              Drag to rotate · Scroll to zoom · Click atoms to measure · Dock controls below
+              <span className="hidden sm:inline">Drag to rotate · Scroll/pinch to zoom · Tap atoms to measure</span>
+              <span className="sm:hidden">Touch to rotate · Pinch to zoom</span>
             </span>
           </div>
         </div>
 
         {/* Right Pane: Synchronized Scientific Inspector (5 cols on lg) */}
-        <div className="lg:col-span-5 xl:col-span-5 flex flex-col gap-4">
+        <div id="inspector-section" className="lg:col-span-5 xl:col-span-5 flex flex-col gap-4">
+          {/* Lab Notebook with expand and shrink icon */}
+          <LabNotebook
+            properties={properties}
+            renderStyle={renderStyle}
+            orbitalMode={orbitalMode}
+            temperatureK={temperatureK}
+            activeVibrationalMode={activeVibrationalMode}
+            measurement={measurement}
+            onRestoreSnapshot={handleRestoreSnapshot}
+          />
+
           {/* Navigation Tabs */}
           <div className="flex rounded-xl bg-slate-200/80 p-1 text-xs font-semibold border border-slate-200 shadow-2xs">
             <button
@@ -348,7 +428,7 @@ export default function App() {
 
           {/* Tab Content */}
           {activeTab === 'properties' && properties && (
-            <PropertyInspector properties={properties} />
+            <PropertyInspector properties={properties} atoms={atoms} />
           )}
 
           {activeTab === 'orbitals' && (
