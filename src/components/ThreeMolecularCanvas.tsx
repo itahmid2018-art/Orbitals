@@ -841,6 +841,15 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
       const t = e.touches[0];
       const deltaX = t.clientX - prevMousePosRef.current.x;
       const deltaY = t.clientY - prevMousePosRef.current.y;
+      prevMousePosRef.current = { x: t.clientX, y: t.clientY };
+
+      if (renderStyle === '2d_projected') {
+        if (moleculeGroupRef.current) {
+          moleculeGroupRef.current.position.x += deltaX * 0.015;
+          moleculeGroupRef.current.position.y -= deltaY * 0.015;
+        }
+        return;
+      }
 
       cameraSphericalRef.current.theta -= deltaX * 0.008;
       cameraSphericalRef.current.phi = Math.max(
@@ -848,7 +857,6 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
         Math.min(Math.PI - 0.05, cameraSphericalRef.current.phi - deltaY * 0.008)
       );
 
-      prevMousePosRef.current = { x: t.clientX, y: t.clientY };
       updateCameraPosition();
     } else if (e.touches.length === 2 && touchPinchDistRef.current !== null) {
       const t1 = e.touches[0];
@@ -907,8 +915,20 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
   };
 
   const handleResetCamera = () => {
-    cameraSphericalRef.current = { radius: cameraDistanceRef.current, theta: Math.PI / 4, phi: Math.PI / 3 };
-    updateCameraPosition();
+    if (moleculeGroupRef.current) {
+      moleculeGroupRef.current.position.set(0, 0, 0);
+      moleculeGroupRef.current.rotation.set(0, 0, 0);
+    }
+    if (renderStyle === '2d_projected') {
+      cameraSphericalRef.current = { radius: cameraDistanceRef.current, theta: 0, phi: Math.PI / 2 };
+      if (cameraRef.current) {
+        cameraRef.current.position.set(0, 0, cameraDistanceRef.current);
+        cameraRef.current.lookAt(0, 0, 0);
+      }
+    } else {
+      cameraSphericalRef.current = { radius: cameraDistanceRef.current, theta: Math.PI / 4, phi: Math.PI / 3 };
+      updateCameraPosition();
+    }
   };
 
   const handleTakeSnapshot = () => {
@@ -966,6 +986,21 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
     };
   }, [isFullscreen]);
 
+  // Align camera strictly to flat orthographic view when entering 2D mode
+  useEffect(() => {
+    if (renderStyle === '2d_projected') {
+      if (cameraRef.current) {
+        cameraSphericalRef.current = { radius: cameraDistanceRef.current, theta: 0, phi: Math.PI / 2 };
+        cameraRef.current.position.set(0, 0, cameraDistanceRef.current);
+        cameraRef.current.lookAt(0, 0, 0);
+      }
+      if (moleculeGroupRef.current) {
+        moleculeGroupRef.current.position.set(0, 0, 0);
+        moleculeGroupRef.current.rotation.set(0, 0, 0);
+      }
+    }
+  }, [renderStyle]);
+
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
     if (!document.fullscreenElement && !isFullscreen) {
@@ -1016,7 +1051,13 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
           <span className="text-slate-400 text-[10px] hidden md:inline">ACES Tonemapped</span>
         </div>
 
-        {renderStyle === 'esp_surface' ? (
+        {renderStyle === '2d_projected' ? (
+          <div className="px-2 sm:px-2.5 py-1 rounded-lg bg-amber-500/90 border border-amber-300 shadow-lg text-slate-950 text-[11px] sm:text-xs flex items-center gap-1.5 font-bold">
+            <span className="w-2 h-2 rounded-full bg-slate-950 shrink-0" />
+            <span>2D Planar ChemView</span>
+            <span className="text-slate-900/80 text-[10px] hidden sm:inline">Orthogonal Structure</span>
+          </div>
+        ) : renderStyle === 'esp_surface' ? (
           <div className="px-2 sm:px-2.5 py-1 rounded-lg bg-slate-900/90 border border-amber-500/50 shadow-lg text-[11px] sm:text-xs flex items-center gap-1.5 sm:gap-2">
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
             <span className="font-semibold text-amber-300 whitespace-nowrap">ESP Surface</span>
@@ -1042,6 +1083,19 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
 
       {/* Top Right Quick Actions */}
       <div className="absolute top-2 sm:top-3 right-2 sm:right-3 flex items-center gap-1 p-1 sm:p-1.5 rounded-xl bg-slate-900/85 border border-slate-700/70 shadow-lg text-slate-200 z-10">
+        {/* 2D / 3D Mode Toggle Button */}
+        <button
+          onClick={() => onChangeRenderStyle(renderStyle === '2d_projected' ? 'ball_and_stick' : '2d_projected')}
+          title={renderStyle === '2d_projected' ? 'Switch to 3D Quantum View' : 'Switch to 2D Planar Chemical View'}
+          className={`px-2 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1 cursor-pointer ${
+            renderStyle === '2d_projected'
+              ? 'bg-amber-500 text-slate-950 font-extrabold shadow-md ring-1 ring-amber-300'
+              : 'hover:bg-slate-800 text-slate-300 hover:text-white'
+          }`}
+        >
+          <span>{renderStyle === '2d_projected' ? '2D View' : '2D / 3D'}</span>
+        </button>
+
         <button
           onClick={handleResetCamera}
           title="Reset Camera Orientation"
@@ -1226,6 +1280,7 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
                 { id: 'stick', label: 'Stick' },
                 { id: 'wireframe', label: 'Wire' },
                 { id: 'esp_surface', label: '⚡ ESP Map' },
+                { id: '2d_projected', label: '📐 2D Planar' },
               ].map((item) => (
                 <button
                   key={item.id}

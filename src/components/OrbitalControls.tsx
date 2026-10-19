@@ -47,6 +47,7 @@ export const OrbitalControls: React.FC<Props> = ({
             { id: 'stick', label: 'Stick Model' },
             { id: 'wireframe', label: 'Wireframe Skeleton' },
             { id: 'esp_surface', label: '⚡ ESP Density Map' },
+            { id: '2d_projected', label: '📐 2D Planar Structure' },
           ].map((style) => (
             <button
               key={style.id}

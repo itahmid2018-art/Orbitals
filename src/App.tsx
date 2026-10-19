@@ -28,6 +28,7 @@ import { TutorialGuideModal } from './components/TutorialGuideModal';
 import { PeriodicTablePage } from './components/PeriodicTablePage';
 import { AboutPage } from './components/AboutPage';
 import { LabNotebook } from './components/LabNotebook';
+import { FloatingSidebar } from './components/FloatingSidebar';
 import {
   Sparkles,
   Layers,
@@ -37,8 +38,8 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  // Navigation: 'workbench' | 'periodic-table' | 'about'
-  const [currentPage, setCurrentPage] = useState<'workbench' | 'periodic-table' | 'about'>('workbench');
+  // Navigation: 'about' (default landing page) | 'workbench' | 'periodic-table'
+  const [currentPage, setCurrentPage] = useState<'workbench' | 'periodic-table' | 'about'>('about');
 
   // Molecular state
   const [currentFormula, setCurrentFormula] = useState('H2O');
@@ -155,7 +156,7 @@ export default function App() {
     }
   };
 
-  // Support deep links from AMP, sitemap, PWA shortcuts, and AI crawlers (?view=elements, ?molecule=caffeine, ?element=Fe)
+  // Support deep links from AMP, sitemap, PWA shortcuts, and AI crawlers (?view=workbench, ?view=elements, ?molecule=caffeine, ?element=Fe)
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -163,22 +164,41 @@ export default function App() {
       const molecule = params.get('molecule');
       const element = params.get('element');
 
-      if (view === 'elements' || view === 'periodic-table') {
+      if (view === 'workbench') {
+        setCurrentPage('workbench');
+      } else if (view === 'elements' || view === 'periodic-table') {
         setCurrentPage('periodic-table');
       } else if (view === 'about') {
         setCurrentPage('about');
       } else if (molecule) {
         loadMolecule(molecule);
+        setCurrentPage('workbench');
       } else if (element) {
         loadMolecule(element);
+        setCurrentPage('workbench');
       }
     } catch {
       // ignore
     }
   }, []);
 
+  // 2D Planar ChemView vs 3D Quantum View Toggle for Studio PBR
+  const handleToggle2D = () => {
+    if (renderStyle === '2d_projected') {
+      setRenderStyle('ball_and_stick');
+    } else {
+      setRenderStyle('2d_projected');
+      if (currentPage !== 'workbench') {
+        setCurrentPage('workbench');
+      }
+    }
+  };
+
   // Programmatic Tutorial step application to sync 3D viewport
   const handleApplyTutorialStep = (step: TutorialStep) => {
+    if (currentPage !== 'workbench') {
+      setCurrentPage('workbench');
+    }
     if (step.formula.toUpperCase() !== currentFormula.toUpperCase()) {
       loadMolecule(step.formula);
     }
@@ -262,41 +282,61 @@ export default function App() {
     }
   };
 
-  // If on Periodic Table independent page
-  if (currentPage === 'periodic-table') {
-    return (
-      <PeriodicTablePage
-        onBackToWorkbench={() => setCurrentPage('workbench')}
-        onLoadMoleculeIn3D={loadMolecule}
-        onOpenAbout={() => setCurrentPage('about')}
-      />
-    );
-  }
-
-  // If on About independent page
-  if (currentPage === 'about') {
-    return (
-      <AboutPage
-        onBackToWorkbench={() => setCurrentPage('workbench')}
-        onOpenPeriodicTable={() => setCurrentPage('periodic-table')}
-        onLoadMoleculeIn3D={loadMolecule}
-      />
-    );
-  }
-
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800">
-      {/* Top Header with Search, Quick Chips & Action Triggers */}
-      <Header
-        properties={properties}
-        onSearch={loadMolecule}
-        isLoading={isLoading}
-        onOpenVseprGuide={() => setIsVseprModalOpen(true)}
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-800 relative">
+      {/* Static Floating Icon-Based Sidebar Menu for All Views */}
+      <FloatingSidebar
+        currentPage={currentPage}
+        onNavigate={(page) => setCurrentPage(page)}
         onOpenReactionPredictor={() => setIsReactionModalOpen(true)}
+        onOpenVseprGuide={() => setIsVseprModalOpen(true)}
         onOpenTutorials={() => setIsTutorialModalOpen(true)}
-        onOpenPeriodicTable={() => setCurrentPage('periodic-table')}
-        onOpenAbout={() => setCurrentPage('about')}
+        is2DActive={renderStyle === '2d_projected'}
+        onToggle2D={handleToggle2D}
       />
+
+      {/* View 1: About & Vision Landing Page (Default Landing Content) */}
+      {currentPage === 'about' && (
+        <div className="flex-1 flex flex-col pl-0 sm:pl-12 lg:pl-0">
+          <AboutPage
+            onBackToWorkbench={() => setCurrentPage('workbench')}
+            onOpenPeriodicTable={() => setCurrentPage('periodic-table')}
+            onLoadMoleculeIn3D={(formula) => {
+              loadMolecule(formula);
+              setCurrentPage('workbench');
+            }}
+          />
+        </div>
+      )}
+
+      {/* View 2: Complete 118-Element IUPAC Periodic Table */}
+      {currentPage === 'periodic-table' && (
+        <div className="flex-1 flex flex-col pl-0 sm:pl-12 lg:pl-0">
+          <PeriodicTablePage
+            onBackToWorkbench={() => setCurrentPage('workbench')}
+            onLoadMoleculeIn3D={(formula) => {
+              loadMolecule(formula);
+              setCurrentPage('workbench');
+            }}
+            onOpenAbout={() => setCurrentPage('about')}
+          />
+        </div>
+      )}
+
+      {/* View 3: 3D Molecular Workbench (Studio PBR & Quantum Canvas) */}
+      {currentPage === 'workbench' && (
+        <div className="flex-1 flex flex-col pl-0 sm:pl-12 lg:pl-0">
+          {/* Top Header with Search, Quick Chips & Action Triggers */}
+          <Header
+            properties={properties}
+            onSearch={loadMolecule}
+            isLoading={isLoading}
+            onOpenVseprGuide={() => setIsVseprModalOpen(true)}
+            onOpenReactionPredictor={() => setIsReactionModalOpen(true)}
+            onOpenTutorials={() => setIsTutorialModalOpen(true)}
+            onOpenPeriodicTable={() => setCurrentPage('periodic-table')}
+            onOpenAbout={() => setCurrentPage('about')}
+          />
 
       {/* Error alert banner if any */}
       {errorMessage && (
@@ -462,6 +502,8 @@ export default function App() {
           )}
         </div>
       </main>
+      </div>
+      )}
 
       {/* Interactive Modals */}
       <VSEPRSolverModal
@@ -474,14 +516,20 @@ export default function App() {
         isOpen={isReactionModalOpen}
         onClose={() => setIsReactionModalOpen(false)}
         currentFormula={currentFormula}
-        onLoadMoleculeIn3D={loadMolecule}
+        onLoadMoleculeIn3D={(formula) => {
+          loadMolecule(formula);
+          setCurrentPage('workbench');
+        }}
       />
 
       <TutorialGuideModal
         isOpen={isTutorialModalOpen}
         onClose={() => setIsTutorialModalOpen(false)}
         onApplyTutorialStep={handleApplyTutorialStep}
-        onLoadMoleculeIn3D={loadMolecule}
+        onLoadMoleculeIn3D={(formula) => {
+          loadMolecule(formula);
+          setCurrentPage('workbench');
+        }}
       />
     </div>
   );
