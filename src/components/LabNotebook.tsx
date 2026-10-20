@@ -261,7 +261,7 @@ export const LabNotebook: React.FC<Props> = ({
                 className="px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-amber-500 bg-white text-slate-700"
               >
                 <option value="Observation">Observation</option>
-                <option value="VSEPR Analysis">VSEPR Analysis</option>
+                <option value="VSEPR Analysis">VSEPR (Valence Shell Electron Pair Repulsion) Analysis</option>
                 <option value="Spectroscopy">Spectroscopy</option>
                 <option value="Reaction Mechanism">Reaction Mechanism</option>
                 <option value="Lab Report">Lab Report</option>

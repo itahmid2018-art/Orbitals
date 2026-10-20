@@ -63,7 +63,7 @@ export const GUIDED_TUTORIALS: GuidedTutorial[] = [
         targetOrbitalMode: 'hybrid',
         targetRenderStyle: 'ball_and_stick',
         showDipole: true,
-        takeaway: 'VSEPR repulsion hierarchy: (LP—LP) > (LP—BP) > (BP—BP), bending the bond angle to 104.5°.',
+        takeaway: 'VSEPR (Valence Shell Electron Pair Repulsion) hierarchy: (LP—LP) > (LP—BP) > (BP—BP), bending the bond angle to 104.5°.',
       },
       {
         stepIndex: 4,
@@ -242,7 +242,7 @@ export interface MoleculeLibraryCategory {
 
 export const MOLECULE_LIBRARY: MoleculeLibraryCategory[] = [
   {
-    category: 'VSEPR Fundamentals',
+    category: 'VSEPR (Valence Shell Electron Pair Repulsion) Fundamentals',
     description: 'Canonical geometric archetypes from linear (SN=2) to octahedral (SN=6)',
     molecules: [
       { formula: 'H2O', name: 'Water', description: 'Bent geometry (104.5°) with 2 lone pairs', shape: 'Bent', hybridization: 'sp³' },

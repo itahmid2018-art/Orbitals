@@ -24,10 +24,10 @@ export const VSEPRSolverModal: React.FC<Props> = ({ isOpen, onClose, properties 
             </div>
             <div>
               <h2 className="text-base font-bold text-slate-900">
-                VSEPR & Quantum Geometry Solver
+                VSEPR (Valence Shell Electron Pair Repulsion) & Quantum Geometry Solver
               </h2>
               <p className="text-xs text-slate-500">
-                Step-by-step theoretical derivation for {properties?.formula || 'molecules'}
+                Step-by-step theoretical derivation and lone-pair repulsion solver for {properties?.formula || 'molecules'}
               </p>
             </div>
           </div>

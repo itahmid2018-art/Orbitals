@@ -43,11 +43,11 @@ export const OrbitalControls: React.FC<Props> = ({
         <div className="grid grid-cols-2 gap-2 text-xs">
           {[
             { id: 'ball_and_stick', label: 'Ball & Stick' },
-            { id: 'space_filling', label: 'Space-Filling (vdW)' },
+            { id: 'space_filling', label: 'Space-Filling (vdW [van der Waals])' },
             { id: 'stick', label: 'Stick Model' },
             { id: 'wireframe', label: 'Wireframe Skeleton' },
-            { id: 'esp_surface', label: '⚡ ESP Density Map' },
-            { id: '2d_projected', label: '📐 2D Planar Structure' },
+            { id: 'esp_surface', label: '⚡ ESP (Electrostatic Potential) Map' },
+            { id: '2d_projected', label: '📐 2D Planar ChemView' },
           ].map((style) => (
             <button
               key={style.id}

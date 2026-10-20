@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Atom,
   ArrowLeft,
@@ -19,9 +19,13 @@ import {
   HelpCircle,
   ExternalLink,
   ChevronRight,
+  ChevronDown,
   ShieldCheck,
   Scale,
   Code2,
+  Search,
+  MessageCircleQuestion,
+  Filter,
 } from 'lucide-react';
 
 interface Props {
@@ -30,14 +34,355 @@ interface Props {
   onLoadMoleculeIn3D: (formula: string) => void;
 }
 
+interface FAQItem {
+  id: string;
+  category: 'Core Chemistry & VSEPR' | '3D & 2D Canvas' | 'Periodic Table & IUPAC' | 'Reactions & Spectroscopy' | 'Mobile & Web Tech';
+  question: string;
+  answer: React.ReactNode;
+}
+
+const FAQ_LIST: FAQItem[] = [
+  {
+    id: 'faq-vsepr',
+    category: 'Core Chemistry & VSEPR',
+    question: 'What is VSEPR (Valence Shell Electron Pair Repulsion) Theory, and how does Orbitalis calculate 3D shapes?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          <strong className="text-slate-800">VSEPR (Valence Shell Electron Pair Repulsion)</strong> Theory is a foundational chemical model stating that electron pairs (both bonding pairs and non-bonding lone pairs) surrounding a central atom repel each other electrostatically. To minimize this repulsive energy, the atoms and electron clouds arrange themselves at maximum geometric separation.
+        </p>
+        <p>
+          In Orbitalis, the computation engine calculates the central atom's <strong className="text-slate-800">Steric Number (SN = Bonding Pairs + Lone Pairs)</strong>, determines the ideal geometric parent (Linear for SN=2, Trigonal Planar for SN=3, Tetrahedral for SN=4, Trigonal Bipyramidal for SN=5, and Octahedral for SN=6), and then models the repulsive hierarchy:
+        </p>
+        <div className="p-2 rounded bg-slate-100 font-mono text-[11px] text-slate-800">
+          Repulsion Magnitude: (Lone Pair − Lone Pair) &gt; (Lone Pair − Bonding Pair) &gt; (Bonding Pair − Bonding Pair)
+        </div>
+        <p>
+          This causes angle deviations from symmetric values, accurately predicting real experimental bond angles such as the $104.5^\circ$ bent angle in Water ($H_2O$) and $107.8^\circ$ trigonal pyramidal angle in Ammonia ($NH_3$).
+        </p>
+      </div>
+    ),
+  },
+  {
+    id: 'faq-iupac',
+    category: 'Periodic Table & IUPAC',
+    question: 'What does IUPAC (International Union of Pure and Applied Chemistry) mean, and how does Orbitalis follow IUPAC standards?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          <strong className="text-slate-800">IUPAC (International Union of Pure and Applied Chemistry)</strong> is the universally acknowledged global authority on chemical nomenclature, terminology, standardized atomic weights, and elemental classification.
+        </p>
+        <p>
+          Orbitalis adheres strictly to official IUPAC standards across:
+        </p>
+        <ul className="list-disc pl-4 space-y-1">
+          <li><strong>Complete 118 Elements:</strong> Covers all officially confirmed IUPAC elements from Hydrogen ($Z=1$) to Oganesson ($Z=118$).</li>
+          <li><strong>1–18 Group Numbering:</strong> Utilizes the modern IUPAC Arabic numeral group scheme (replacing legacy CAS/old European IA–VIIIB formats).</li>
+          <li><strong>$f$-Block Splitting:</strong> Accurately isolates Lanthanides (57–71) and Actinides (89–103) into standard 15-column subgrids.</li>
+          <li><strong>Systematic Chemical Names:</strong> Provides both IUPAC systematic nomenclature and accepted trivial names for all compounds.</li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    id: 'faq-pbr',
+    category: '3D & 2D Canvas',
+    question: 'What is Studio PBR (Physically-Based Rendering) and how does the 3D lighting work?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          <strong className="text-slate-800">PBR (Physically-Based Rendering)</strong> is a state-of-the-art computer graphics shading methodology that calculates the reflection of light based on real-world optics and microfacet physics.
+        </p>
+        <p>
+          Orbitalis implements Three.js <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-blue-700">MeshPhysicalMaterial</code> with:
+        </p>
+        <ul className="list-disc pl-4 space-y-1">
+          <li><strong>ACES (Academy Color Encoding System) Filmic Tonemapping:</strong> Delivers true cinematic color reproduction with high dynamic range highlights and realistic contrast.</li>
+          <li><strong>Environment Reflections:</strong> Procedural studio reflections generated via <code className="font-mono bg-slate-100 px-1 py-0.5 rounded text-blue-700">RoomEnvironment</code> and pre-filtered radiance maps.</li>
+          <li><strong>Clearcoat Layers:</strong> Clearcoat specular sheens mimicking atomic crystal lattices and polished chemical models.</li>
+          <li><strong>Soft Grounding Shadows:</strong> Realistic contact shadows anchoring molecules naturally in 3D space.</li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    id: 'faq-2d',
+    category: '3D & 2D Canvas',
+    question: 'How do I switch between 3D Quantum View and 2D Planar ChemView?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          You can toggle between 3D and 2D views anytime using the <strong className="text-slate-800">2D / 3D button</strong> located on the persistent left floating sidebar, or via the top-right toolbar on the 3D canvas itself.
+        </p>
+        <p>
+          When you activate <strong className="text-slate-800">2D Planar ChemView</strong>:
+        </p>
+        <ul className="list-disc pl-4 space-y-1">
+          <li>Orbitalis computes an optimal best-fit planar projection along the minimum-variance spatial axis of the molecule.</li>
+          <li>Every atom is rendered as a clean, high-contrast circular badge displaying its element symbol (e.g. H, C, N, O) and standard <strong className="text-slate-800">CPK (Corey-Pauling-Koltun)</strong> color background with crisp white borders.</li>
+          <li>Bonds are flattened into planar chemical lines.</li>
+          <li>The camera snaps orthographically perpendicular to the molecular plane, giving you an instant textbook-grade structural diagram.</li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    id: 'faq-cpk',
+    category: 'Core Chemistry & VSEPR',
+    question: 'What are CPK (Corey-Pauling-Koltun) colors used for atoms?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          <strong className="text-slate-800">CPK (Corey-Pauling-Koltun)</strong> coloring is the universally recognized scientific color convention developed by Robert Corey, Linus Pauling, and Walter Koltun for physical and computational chemistry models.
+        </p>
+        <p>Key CPK color assignments in Orbitalis include:</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 font-mono text-[11px]">
+          <div className="p-1.5 rounded bg-slate-100 border border-slate-200 flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-white border border-slate-400" />
+            <span>Hydrogen (H): White</span>
+          </div>
+          <div className="p-1.5 rounded bg-slate-100 border border-slate-200 flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-slate-800" />
+            <span>Carbon (C): Black/Grey</span>
+          </div>
+          <div className="p-1.5 rounded bg-slate-100 border border-slate-200 flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-blue-600" />
+            <span>Nitrogen (N): Blue</span>
+          </div>
+          <div className="p-1.5 rounded bg-slate-100 border border-slate-200 flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-red-600" />
+            <span>Oxygen (O): Red</span>
+          </div>
+          <div className="p-1.5 rounded bg-slate-100 border border-slate-200 flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-emerald-500" />
+            <span>Fluorine (F): Green</span>
+          </div>
+          <div className="p-1.5 rounded bg-slate-100 border border-slate-200 flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-green-600" />
+            <span>Chlorine (Cl): Green</span>
+          </div>
+          <div className="p-1.5 rounded bg-slate-100 border border-slate-200 flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-yellow-400" />
+            <span>Sulfur (S): Yellow</span>
+          </div>
+          <div className="p-1.5 rounded bg-slate-100 border border-slate-200 flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full bg-orange-500" />
+            <span>Phosphorus (P): Orange</span>
+          </div>
+        </div>
+      </div>
+    ),
+  },
+  {
+    id: 'faq-esp',
+    category: '3D & 2D Canvas',
+    question: 'What is an ESP (Electrostatic Potential) map and how do I read the color gradient?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          An <strong className="text-slate-800">ESP (Electrostatic Potential)</strong> map wraps the molecule in a continuous translucent electron density isosurface envelope and colors each point according to the electrostatic potential felt by a positive unit test charge.
+        </p>
+        <p>The color spectrum directly maps chemical reactivity:</p>
+        <ul className="list-disc pl-4 space-y-1">
+          <li><span className="font-bold text-red-600">Red (Negative Potential, $\delta^-$):</span> High electron density zones, representing electron-rich, nucleophilic sites susceptible to electrophilic attack.</li>
+          <li><span className="font-bold text-yellow-600">Yellow / Green (Neutral Potential, $\approx 0$):</span> Non-polar regions and hydrocarbon backbones with balanced charge distribution.</li>
+          <li><span className="font-bold text-blue-600">Cyan / Blue (Positive Potential, $\delta^+$):</span> Low electron density zones, representing electron-poor, electrophilic regions that readily attract nucleophiles.</li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    id: 'faq-phases',
+    category: 'Core Chemistry & VSEPR',
+    question: 'What do the (+) Cyan and (−) Coral colors represent in quantum orbital lobes?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          In quantum mechanics, atomic and molecular orbitals are described by mathematical wave-functions $\Psi(x, y, z)$. The <strong className="text-cyan-600 font-bold">(+) Cyan</strong> and <strong className="text-rose-600 font-bold">(−) Coral</strong> lobes represent the <strong className="text-slate-800">mathematical phase sign</strong> ($\Psi &gt; 0$ vs. $\Psi &lt; 0$) of the electron probability amplitude.
+        </p>
+        <p className="p-2 rounded bg-amber-50 border border-amber-200 text-amber-900 text-[11px]">
+          <strong>Critical Educational Note:</strong> Orbital phase signs do <em>not</em> represent positive or negative electrical charge (the electron is always negatively charged). Instead, phase signs determine whether two overlapping orbitals interfere constructively (same phase $\to$ bonding $\sigma$ or $\pi$ orbital) or destructively (opposite phase $\to$ antibonding $\sigma^*$ or $\pi^*$ orbital with an intermediate nodal plane).
+        </p>
+      </div>
+    ),
+  },
+  {
+    id: 'faq-provenance',
+    category: 'Periodic Table & IUPAC',
+    question: 'Where does the molecular structure and chemical data come from?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          Orbitalis utilizes a dual-engine architecture to ensure both accuracy and instant responsiveness:
+        </p>
+        <ul className="list-disc pl-4 space-y-1">
+          <li><strong>NCBI PubChem REST API (Application Programming Interface):</strong> Queries the world's largest open chemical database for experimentally determined or MMFF94 force-field optimized 3D conformer coordinates (SDF [Structure-Data File]), systematic IUPAC names, SMILES (Simplified Molecular Input Line Entry System), and InChIKeys.</li>
+          <li><strong>Local Ab-Initio VSEPR (Valence Shell Electron Pair Repulsion) Fallback:</strong> If a user inputs a novel or hypothetical formula without internet access, Orbitalis parses the stoichiometric counts locally and generates rigorous 3D coordinates from first principles within milliseconds.</li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    id: 'faq-measure',
+    category: '3D & 2D Canvas',
+    question: 'How do I measure interatomic bond lengths and bond angles with the measurement tool?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          Orbitalis includes an interactive point-and-click geometric measurement tool integrated directly into the 3D canvas:
+        </p>
+        <ul className="list-disc pl-4 space-y-1">
+          <li><strong>To measure Bond Distance:</strong> Click any <strong className="text-slate-800">2 atoms</strong>. Orbitalis displays their exact interatomic separation in Ångströms (Å) and picometers (pm).</li>
+          <li><strong>To measure Bond Angle:</strong> Click any <strong className="text-slate-800">3 atoms</strong>. Orbitalis calculates the vertex angle formed by the middle atom in degrees (°).</li>
+          <li><strong>Real-Time Dynamics Tracking:</strong> If thermal Brownian motion or vibrational modes are active, distances and angles update live with atomic oscillations.</li>
+          <li><strong>Clear Measurement:</strong> Click the measurement badge or any atom again to deselect.</li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    id: 'faq-reactions',
+    category: 'Reactions & Spectroscopy',
+    question: 'How does the Chemical Reaction Predictor work and what reaction types are supported?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          The <strong className="text-slate-800">Chemical Reaction Predictor</strong> accepts multiple reactant formulas (e.g. <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">C2H4 + H2O</code>, <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">CH4 + 2O2</code>, <code className="font-mono bg-slate-100 px-1 py-0.5 rounded">C6H6 + Br2</code>) and uses functional group analysis and mechanistic heuristics to determine products.
+        </p>
+        <p>Supported reaction classes include:</p>
+        <ul className="list-disc pl-4 space-y-1">
+          <li><strong>Electrophilic Addition:</strong> Hydration and halogenation of alkenes obeying Markovnikov's Rule.</li>
+          <li><strong>Combustion:</strong> Complete stoichiometric oxidation of hydrocarbons yielding $CO_2$ and $H_2O$.</li>
+          <li><strong>Fischer Esterification:</strong> Acid-catalyzed condensation of carboxylic acids and alcohols.</li>
+          <li><strong>Electrophilic Aromatic Substitution:</strong> Bromination, nitration, and sulfonation of benzene rings.</li>
+          <li><strong>Acid-Base Neutralization:</strong> Proton transfers forming aqueous salts and water.</li>
+        </ul>
+        <p>
+          Each reaction includes curved-arrow mechanism steps, intermediate structures (carbocations, arenium ions), thermodynamic standard enthalpy $\Delta H^\circ$, and 1-click loading into the 3D canvas.
+        </p>
+      </div>
+    ),
+  },
+  {
+    id: 'faq-amp',
+    category: 'Mobile & Web Tech',
+    question: 'What is the difference between the full Web App, PWA, and AMP editions?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>Orbitalis is built with progressive enhancement across three optimized deployment tiers:</p>
+        <ul className="list-disc pl-4 space-y-1">
+          <li><strong>Full Desktop/Tablet Web App:</strong> Hardware-accelerated Three.js WebGL (Web Graphics Library) rendering, normal vibrational harmonic animations, real-time ESP potential isosurfaces, and full 118-element IUPAC table.</li>
+          <li><strong>PWA (Progressive Web Application):</strong> Installable directly to mobile home screens and desktop taskbars with offline cache support, vector favicons, and Web App Manifest (<code className="font-mono bg-slate-100 px-1 py-0.5 rounded">manifest.json</code>).</li>
+          <li><strong>AMP (Accelerated Mobile Pages) & HTMX (Hypertext Markup Extensions) Edition (<code className="font-mono bg-slate-100 px-1 py-0.5 rounded">/amp.html</code>):</strong> A validated ultra-fast mobile edition optimized for mobile search crawlers and low-bandwidth connections that loads within 50 milliseconds with zero heavy graphics overhead.</li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    id: 'faq-bioactive',
+    category: 'Core Chemistry & VSEPR',
+    question: 'What do TPSA (Topological Polar Surface Area) and Lipinski\'s Rule of 5 mean?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          In medicinal chemistry and pharmacology, drug molecules must cross biological cell membranes to reach target receptors. Orbitalis automatically inspects:
+        </p>
+        <ul className="list-disc pl-4 space-y-1">
+          <li><strong>TPSA (Topological Polar Surface Area):</strong> The total molecular surface area belonging to polar atoms (Nitrogen, Oxygen, and their attached Hydrogens). Compounds with TPSA ≤ 140 Å² typically exhibit good cell membrane permeation, while TPSA ≤ 90 Å² allows penetration of the Blood-Brain Barrier (BBB).</li>
+          <li><strong>Lipinski's Rule of 5 (Pfizer's Rule):</strong> Predicts whether a compound has high oral bioavailability based on: Molecular Weight ≤ 500 g/mol, XLogP ≤ 5, Hydrogen Bond Donors ≤ 5, and Hydrogen Bond Acceptors ≤ 10.</li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    id: 'faq-fmo',
+    category: 'Reactions & Spectroscopy',
+    question: 'What are HOMO (Highest Occupied Molecular Orbital) and LUMO (Lowest Unoccupied Molecular Orbital)?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          According to <strong className="text-slate-800">FMO (Frontier Molecular Orbital)</strong> theory (formulated by Nobel laureate Kenichi Fukui):
+        </p>
+        <ul className="list-disc pl-4 space-y-1">
+          <li><strong>HOMO (Highest Occupied Molecular Orbital):</strong> The highest energetic orbital containing electrons. It acts as the primary electron donor in chemical reactions (nucleophile / Lewis base).</li>
+          <li><strong>LUMO (Lowest Unoccupied Molecular Orbital):</strong> The lowest energetic orbital that is empty. It acts as the primary electron acceptor (electrophile / Lewis acid).</li>
+          <li>The smaller the energetic gap (ΔE = E(LUMO) − E(HOMO)), the more reactive the compound is towards light absorption and chemical transformation.</li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    id: 'faq-notebook',
+    category: '3D & 2D Canvas',
+    question: 'How does the Lab Notebook work, and how can I export my observations?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          The collapsible <strong className="text-slate-800">Lab Notebook</strong> (located on the right inspector pane) enables students and researchers to capture live experimental snapshots while exploring molecules:
+        </p>
+        <ul className="list-disc pl-4 space-y-1">
+          <li><strong>1-Click 3D State Capture:</strong> Freezes the current orbital mode (sp, sp², sp³, π clouds), normal vibration frequency in cm⁻¹, thermal temperature in Kelvin (K), dipole moment, and active point-and-click measurements.</li>
+          <li><strong>Tagged Student Observations:</strong> Classify notes under <em>Observation</em>, <em>VSEPR Analysis</em>, <em>Spectroscopy</em>, <em>Reaction Mechanism</em>, or <em>Lab Report</em>.</li>
+          <li><strong>1-Click 3D Restoration:</strong> Click the restore icon on any notebook card to immediately reload that exact camera angle, temperature, and orbital configuration into the 3D canvas.</li>
+          <li><strong>Markdown Export:</strong> Export your full lab record as a clean, standardized Markdown (<code className="font-mono bg-slate-100 px-1 py-0.5 rounded">.md</code>) file for assignment submissions.</li>
+        </ul>
+      </div>
+    ),
+  },
+];
+
 export const AboutPage: React.FC<Props> = ({
   onBackToWorkbench,
   onOpenPeriodicTable,
   onLoadMoleculeIn3D,
 }) => {
+  const [faqSearch, setFaqSearch] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [expandedFaqIds, setExpandedFaqIds] = useState<Set<string>>(
+    new Set(['faq-vsepr', 'faq-iupac', 'faq-2d', 'faq-pbr'])
+  );
+
+  const toggleFaq = (id: string) => {
+    setExpandedFaqIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const expandAllFaqs = () => {
+    setExpandedFaqIds(new Set(FAQ_LIST.map((f) => f.id)));
+  };
+
+  const collapseAllFaqs = () => {
+    setExpandedFaqIds(new Set());
+  };
+
+  const filteredFaqs = useMemo(() => {
+    return FAQ_LIST.filter((item) => {
+      const matchesCategory = selectedCategory === 'all' || item.category === selectedCategory;
+      const matchesSearch =
+        faqSearch.trim() === '' ||
+        item.question.toLowerCase().includes(faqSearch.toLowerCase()) ||
+        item.category.toLowerCase().includes(faqSearch.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  }, [faqSearch, selectedCategory]);
+
   const handleLaunch = (formula: string) => {
     onLoadMoleculeIn3D(formula);
     onBackToWorkbench();
+  };
+
+  const scrollToFaq = () => {
+    const el = document.getElementById('faq-section');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -49,7 +394,7 @@ export const AboutPage: React.FC<Props> = ({
             <button
               onClick={onBackToWorkbench}
               className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-2xs active:scale-95 cursor-pointer"
-              title="Return to 3D Molecular Workbench"
+              title="Return to 3D Molecular Workbench (Studio PBR [Physically-Based Rendering])"
             >
               <ArrowLeft className="w-4 h-4" />
               <span>3D Workbench</span>
@@ -63,7 +408,7 @@ export const AboutPage: React.FC<Props> = ({
                   About Orbitalis
                 </h1>
                 <p className="text-[11px] text-slate-500 hidden sm:block">
-                  Project Ideas, Vision, Mission, Features & Future Ambitions
+                  Project Ideas, Vision, Mission, Features, FAQ & Future Ambitions
                 </p>
               </div>
             </div>
@@ -71,17 +416,27 @@ export const AboutPage: React.FC<Props> = ({
 
           <div className="flex items-center gap-2">
             <button
+              onClick={scrollToFaq}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 transition-colors shadow-2xs active:scale-95 cursor-pointer"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-blue-600" />
+              <span>FAQs</span>
+            </button>
+
+            <button
               onClick={onOpenPeriodicTable}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 transition-colors shadow-2xs active:scale-95 cursor-pointer"
+              title="Open full IUPAC (International Union of Pure and Applied Chemistry) Periodic Table"
             >
               <Table className="w-3.5 h-3.5 text-teal-600" />
-              <span className="hidden sm:inline">Periodic Table (118)</span>
+              <span className="hidden sm:inline">Periodic Table (118 IUPAC)</span>
               <span className="sm:hidden">Table</span>
             </button>
 
             <a
               href="/amp.html"
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition-colors shadow-2xs active:scale-95"
+              title="Ultra-fast AMP (Accelerated Mobile Pages) & HTMX (Hypertext Markup Extensions) Edition"
             >
               <span className="text-amber-600 font-bold">⚡</span>
               <span className="hidden sm:inline">AMP & HTMX</span>
@@ -110,8 +465,8 @@ export const AboutPage: React.FC<Props> = ({
 
             <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
               Orbitalis was born out of a desire to break chemistry free from static 2D paper diagrams. 
-              By pairing hardware-accelerated 3D WebGL rendering with rigorous chemical physics, ab-initio stoichiometric calculation, 
-              and the complete IUPAC periodic table, Orbitalis transforms textbook theory into an intuitive, tactile interactive canvas.
+              By pairing hardware-accelerated 3D WebGL (Web Graphics Library) rendering with rigorous chemical physics, ab-initio stoichiometric calculation, 
+              and the complete IUPAC (International Union of Pure and Applied Chemistry) periodic table, Orbitalis transforms textbook theory into an intuitive, tactile interactive canvas.
             </p>
 
             <div className="pt-2 flex flex-wrap gap-3">
@@ -127,7 +482,14 @@ export const AboutPage: React.FC<Props> = ({
                 className="px-5 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-600 font-semibold text-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
               >
                 <Table className="w-4 h-4 text-teal-400" />
-                Explore 118 Elements
+                Explore 118 Elements (IUPAC)
+              </button>
+              <button
+                onClick={scrollToFaq}
+                className="px-5 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-blue-300 border border-slate-600 font-semibold text-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
+              >
+                <HelpCircle className="w-4 h-4 text-blue-400" />
+                Browse User FAQs
               </button>
             </div>
           </div>
@@ -177,7 +539,7 @@ export const AboutPage: React.FC<Props> = ({
               </div>
               <p className="text-slate-600 text-sm leading-relaxed">
                 Our mission is to engineer an open, zero-barrier-to-entry molecular workbench that unites real-time 3D orbital dynamics, 
-                VSEPR geometry calculation, and electrostatic potential mapping in a single responsive web environment.
+                VSEPR (Valence Shell Electron Pair Repulsion) geometry calculation, and ESP (Electrostatic Potential) mapping in a single responsive web environment.
               </p>
               <p className="text-slate-600 text-sm leading-relaxed">
                 We are dedicated to building fast, scientifically sound, and aesthetic tools that make chemical education engaging, memorable, 
@@ -187,7 +549,7 @@ export const AboutPage: React.FC<Props> = ({
 
             <div className="mt-6 pt-4 border-t border-slate-100 flex items-center gap-2 text-xs font-semibold text-purple-600">
               <CheckCircle2 className="w-4 h-4 text-purple-500" />
-              <span>Scientifically grounded in IUPAC standards and PubChem databases</span>
+              <span>Scientifically grounded in IUPAC standards and NCBI PubChem databases</span>
             </div>
           </div>
         </section>
@@ -225,7 +587,7 @@ export const AboutPage: React.FC<Props> = ({
                 Legacy Software Friction
               </h4>
               <p>
-                Existing scientific modeling suites (like PyMOL, VMD, or Spartan) are heavy, platform-dependent desktop applications 
+                Existing scientific modeling suites (such as PyMOL, VMD, or Spartan) are heavy, platform-dependent desktop applications 
                 that require complex installations, licensing fees, and extensive training. Most web tools are either simplistic toy viewers or slow.
               </p>
             </div>
@@ -236,7 +598,7 @@ export const AboutPage: React.FC<Props> = ({
                 The Orbitalis Solution
               </h4>
               <p>
-                Orbitalis combines modern WebGL PBR rendering with live chemical calculations. It instantly fetches 3D conformers from PubChem 
+                Orbitalis combines modern WebGL (Web Graphics Library) Studio PBR (Physically-Based Rendering) with live chemical calculations. It instantly fetches 3D conformers from NCBI PubChem 
                 or computes local geometries from scratch, providing sub-millisecond property inspection and dynamic physical simulations in the browser.
               </p>
             </div>
@@ -253,7 +615,7 @@ export const AboutPage: React.FC<Props> = ({
               </h3>
             </div>
             <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 self-start sm:self-auto">
-              Production Verified • Version 2.4.0
+              Production Verified • Version 2.5.0
             </span>
           </div>
 
@@ -263,14 +625,13 @@ export const AboutPage: React.FC<Props> = ({
               <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
                 <Atom className="w-5 h-5" />
               </div>
-              <h4 className="font-bold text-slate-900 text-sm">Interactive 3D WebGL Canvas</h4>
+              <h4 className="font-bold text-slate-900 text-sm">3D WebGL & 2D Planar ChemView</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
-                High-fidelity Three.js studio lighting with Ball-and-Stick, van der Waals Space-Filling, Stick skeleton, and Wireframe topology. 
-                Full-screen immersion with zero camera distortion.
+                Studio PBR (Physically-Based Rendering) lighting with Ball-and-Stick, Space-Filling (vdW [van der Waals]), Stick skeleton, Wireframe, and instant 2D Planar ChemView with CPK (Corey-Pauling-Koltun) elemental symbol tokens.
               </p>
               <div className="pt-1 flex items-center gap-2 text-[11px] text-blue-600 font-semibold">
                 <button onClick={() => handleLaunch('H2O')} className="hover:underline flex items-center gap-1 cursor-pointer">
-                  Test with H₂O <ChevronRight className="w-3 h-3" />
+                  Test with H₂O in 3D <ChevronRight className="w-3 h-3" />
                 </button>
               </div>
             </div>
@@ -283,7 +644,7 @@ export const AboutPage: React.FC<Props> = ({
               <h4 className="font-bold text-slate-900 text-sm">Full 118-Element IUPAC Table</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Complete coverage from Hydrogen ($Z=1$) to Oganesson ($Z=118$) with dedicated 15-column Lanthanide and Actinide subgrids, 
-                Pauling electronegativity, ionization energies, and discoverer records.
+                Pauling electronegativity, ionization energies, STP (Standard Temperature and Pressure) states, and heatmaps.
               </p>
               <div className="pt-1 flex items-center gap-2 text-[11px] text-teal-600 font-semibold">
                 <button onClick={onOpenPeriodicTable} className="hover:underline flex items-center gap-1 cursor-pointer">
@@ -299,12 +660,12 @@ export const AboutPage: React.FC<Props> = ({
               </div>
               <h4 className="font-bold text-slate-900 text-sm">Live Mass & Elemental Breakdown</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Calculated molecular weights ($M_w$), stoichiometric formulas, CPK color-mapped mass fraction stacked bars, and complete 
-                per-element weight percentage tables with one-click report export.
+                Real-time molecular weight and isotopic exact mass computation with constituent elemental mass percentage (% w/w) distribution 
+                and proportional CPK color progress bars.
               </p>
               <div className="pt-1 flex items-center gap-2 text-[11px] text-purple-600 font-semibold">
                 <button onClick={() => handleLaunch('C8H10N4O2')} className="hover:underline flex items-center gap-1 cursor-pointer">
-                  Inspect Caffeine ($M_w$) <ChevronRight className="w-3 h-3" />
+                  Inspect Caffeine Mass <ChevronRight className="w-3 h-3" />
                 </button>
               </div>
             </div>
@@ -317,7 +678,7 @@ export const AboutPage: React.FC<Props> = ({
               <h4 className="font-bold text-slate-900 text-sm">Quantum Orbital Visualizer</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Hybridization lobes ($sp, sp^2, sp^3, sp^3d, sp^3d^2$), $p$-orbitals, and delocalized $\pi$-clouds (benzene ring aromatic resonance) 
-                with dual-phase wavefunction coloring.
+                with dual-phase (+) Cyan and (−) Coral wavefunction coloring.
               </p>
               <div className="pt-1 flex items-center gap-2 text-[11px] text-rose-600 font-semibold">
                 <button onClick={() => handleLaunch('C6H6')} className="hover:underline flex items-center gap-1 cursor-pointer">
@@ -334,7 +695,7 @@ export const AboutPage: React.FC<Props> = ({
               <h4 className="font-bold text-slate-900 text-sm">Electrostatic Potential Map (ESP)</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
                 Electronegativity gradient calculation generating continuous dielectric isosurface envelopes: Red ($\delta^-$ nucleophilic) to 
-                Cyan/Blue ($\delta^+$ electrophilic) with interactive HUD legend.
+                Cyan/Blue ($\delta^+$ electrophilic) with interactive HUD (Heads-Up Display) legend.
               </p>
               <div className="pt-1 flex items-center gap-2 text-[11px] text-amber-600 font-semibold">
                 <button onClick={() => handleLaunch('NH3')} className="hover:underline flex items-center gap-1 cursor-pointer">
@@ -350,8 +711,7 @@ export const AboutPage: React.FC<Props> = ({
               </div>
               <h4 className="font-bold text-slate-900 text-sm">AMP & HTMX Mobile Acceleration</h4>
               <p className="text-xs text-slate-600 leading-relaxed">
-                Ultra-fast Google AMP validated mobile edition (`/amp.html`) with embedded HTMX hypermedia boost for sub-50ms chemical lookups 
-                and full multi-platform iOS/Android icons.
+                Ultra-fast Google AMP (Accelerated Mobile Pages) validated mobile edition (<code className="font-mono bg-slate-100 px-1 py-0.5 rounded">/amp.html</code>) with embedded HTMX (Hypertext Markup Extensions) hypermedia boost for sub-50ms chemical lookups.
               </p>
               <div className="pt-1 flex items-center gap-2 text-[11px] text-sky-600 font-semibold">
                 <a href="/amp.html" className="hover:underline flex items-center gap-1">
@@ -389,7 +749,7 @@ export const AboutPage: React.FC<Props> = ({
                 <span>PDB / Mol / SDF Drag-and-Drop Ingestion</span>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Direct browser file upload and parsing of Protein Data Bank (`.pdb`), MDL Molfile (`.mol`), and `.sdf` files, 
+                Direct browser file upload and parsing of PDB (Protein Data Bank), MDL Molfile (<code className="font-mono bg-slate-900 px-1 py-0.5 rounded text-blue-300">.mol</code>), and SDF (Structure-Data File) formats, 
                 enabling students and bioinformaticians to visualize complex proteins, enzymes, and DNA fragments.
               </p>
             </div>
@@ -401,8 +761,8 @@ export const AboutPage: React.FC<Props> = ({
                 <span>Frontier Orbitals (HOMO / LUMO)</span>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Integration of lightweight quantum chemistry solvers to calculate and render Highest Occupied (HOMO) and 
-                Lowest Unoccupied (LUMO) molecular orbital boundary isosurfaces for predicting chemical reactivity.
+                Integration of lightweight quantum chemistry solvers to calculate and render HOMO (Highest Occupied Molecular Orbital) and 
+                LUMO (Lowest Unoccupied Molecular Orbital) boundary isosurfaces for predicting chemical reactivity.
               </p>
             </div>
 
@@ -413,8 +773,8 @@ export const AboutPage: React.FC<Props> = ({
                 <span>3D Reaction Coordinate Pathways</span>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Dynamic transition-state animation showing reactants transforming through transition states to products 
-                (e.g., SN2 backside attack, ester hydrolysis) synchronized with interactive potential energy reaction curves E(rxn).
+                Dynamic transition-state animations showing reactants transforming through transition states to products 
+                (such as SN2 backside attacks and ester hydrolysis) synchronized with interactive potential energy reaction curves E(rxn).
               </p>
             </div>
 
@@ -426,7 +786,7 @@ export const AboutPage: React.FC<Props> = ({
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
                 Projecting full-scale 3D molecules onto physical lab benches, classroom desks, and presentation podiums 
-                using WebXR Device API on smartphones and mixed-reality headsets.
+                using WebXR (Extended Reality) Device APIs on smartphones and mixed-reality headsets.
               </p>
             </div>
           </div>
@@ -444,17 +804,17 @@ export const AboutPage: React.FC<Props> = ({
 
           <div className="flex flex-wrap gap-2 pt-2">
             {[
-              'Three.js (WebGL)',
-              'React 19',
-              'TypeScript',
-              'Tailwind CSS',
-              'IUPAC Standard Data',
-              'PubChem REST API',
-              'VSEPR Geometry Engine',
-              'Google AMP ⚡',
-              'HTMX Hypermedia',
-              'PWA & Web Manifest',
-              'Schema.org JSON-LD',
+              'Three.js (WebGL [Web Graphics Library])',
+              'React 19 (TypeScript)',
+              'Tailwind CSS v4',
+              'IUPAC (International Union of Pure and Applied Chemistry) Data',
+              'NCBI PubChem REST API (Application Programming Interface)',
+              'VSEPR (Valence Shell Electron Pair Repulsion) Geometry Engine',
+              'Studio PBR (Physically-Based Rendering)',
+              'Google AMP ⚡ (Accelerated Mobile Pages)',
+              'HTMX (High-power Hypertext Markup Extensions)',
+              'PWA (Progressive Web Application) & Web Manifest',
+              'Schema.org JSON-LD Structured Data',
             ].map((tech) => (
               <span
                 key={tech}
@@ -466,13 +826,139 @@ export const AboutPage: React.FC<Props> = ({
           </div>
         </section>
 
+        {/* Comprehensive Interactive FAQ Section */}
+        <section id="faq-section" className="rounded-2xl bg-white border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 text-xs font-semibold">
+                <MessageCircleQuestion className="w-3.5 h-3.5 text-blue-600" />
+                <span>Knowledge Base & Support</span>
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 tracking-tight">
+                Frequently Asked Questions (FAQ)
+              </h3>
+              <p className="text-xs text-slate-500">
+                Common queries regarding chemistry principles, 3D & 2D rendering, IUPAC standards, and webapp features.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <button
+                onClick={expandAllFaqs}
+                className="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+              >
+                Expand All
+              </button>
+              <button
+                onClick={collapseAllFaqs}
+                className="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
+              >
+                Collapse All
+              </button>
+            </div>
+          </div>
+
+          {/* FAQ Search & Category Filter Controls */}
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={faqSearch}
+                onChange={(e) => setFaqSearch(e.target.value)}
+                placeholder="Search questions (e.g. VSEPR, IUPAC, 2D, ESP, CPK, PBR, orbitals, mass)..."
+                className="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              />
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+              <span className="text-[11px] text-slate-400 font-medium shrink-0 flex items-center gap-1">
+                <Filter className="w-3 h-3" />
+                Filter:
+              </span>
+              {[
+                { id: 'all', label: 'All Questions' },
+                { id: 'Core Chemistry & VSEPR', label: 'VSEPR & Chemistry' },
+                { id: '3D & 2D Canvas', label: '3D/2D Canvas' },
+                { id: 'Periodic Table & IUPAC', label: 'Periodic Table' },
+                { id: 'Reactions & Spectroscopy', label: 'Reactions' },
+                { id: 'Mobile & Web Tech', label: 'Mobile & PWA' },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`px-2.5 py-1 rounded-lg whitespace-nowrap text-xs font-medium transition-colors cursor-pointer shrink-0 ${
+                    selectedCategory === cat.id
+                      ? 'bg-blue-600 text-white font-semibold shadow-2xs'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-600'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* FAQ Accordion List */}
+          <div className="space-y-3 pt-2">
+            {filteredFaqs.length > 0 ? (
+              filteredFaqs.map((item) => {
+                const isExpanded = expandedFaqIds.has(item.id);
+                return (
+                  <div
+                    key={item.id}
+                    className={`rounded-xl border transition-all ${
+                      isExpanded
+                        ? 'border-blue-300 bg-blue-50/20 shadow-xs'
+                        : 'border-slate-200 bg-white hover:border-slate-300'
+                    }`}
+                  >
+                    <button
+                      onClick={() => toggleFaq(item.id)}
+                      className="w-full p-4 flex items-center justify-between text-left gap-3 cursor-pointer"
+                    >
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">
+                          {item.category}
+                        </span>
+                        <h4 className="text-sm font-bold text-slate-900 leading-snug">
+                          {item.question}
+                        </h4>
+                      </div>
+                      <div
+                        className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-200 ${
+                          isExpanded
+                            ? 'bg-blue-100 text-blue-700 rotate-180'
+                            : 'bg-slate-100 text-slate-500'
+                        }`}
+                      >
+                        <ChevronDown className="w-4 h-4" />
+                      </div>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="px-4 pb-4 pt-1 border-t border-slate-100">
+                        {item.answer}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            ) : (
+              <div className="text-center py-8 text-slate-500 text-xs">
+                No questions found matching "{faqSearch}". Try searching for terms like "VSEPR", "IUPAC", "2D", or "ESP".
+              </div>
+            )}
+          </div>
+        </section>
+
         {/* Call to Action Banner */}
         <section className="rounded-2xl bg-blue-50 border border-blue-200 p-6 sm:p-8 text-center space-y-4">
           <h3 className="text-xl font-bold text-blue-950 tracking-tight">
             Ready to Explore the Molecular Realm?
           </h3>
           <p className="text-sm text-blue-800 max-w-xl mx-auto">
-            Jump directly into the 3D canvas, inspect all 118 chemical elements, or test reaction mechanisms in real time.
+            Jump directly into the 3D canvas, inspect all 118 chemical elements (IUPAC), or test reaction mechanisms in real time.
           </p>
           <div className="flex flex-wrap justify-center gap-3 pt-2">
             <button
@@ -485,7 +971,7 @@ export const AboutPage: React.FC<Props> = ({
               onClick={onOpenPeriodicTable}
               className="px-6 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-300 font-semibold text-xs transition-all cursor-pointer"
             >
-              Open Periodic Table
+              Open Periodic Table (118 IUPAC)
             </button>
           </div>
         </section>
@@ -498,9 +984,11 @@ export const AboutPage: React.FC<Props> = ({
             Orbitalis — 3D Molecular & Quantum Dynamics Workbench
           </p>
           <div className="flex justify-center gap-4 text-[11px] text-slate-500">
-            <button onClick={onBackToWorkbench} className="hover:text-blue-600 cursor-pointer">Workbench</button>
+            <button onClick={onBackToWorkbench} className="hover:text-blue-600 cursor-pointer">3D Workbench</button>
             <span>•</span>
-            <button onClick={onOpenPeriodicTable} className="hover:text-blue-600 cursor-pointer">Periodic Table</button>
+            <button onClick={onOpenPeriodicTable} className="hover:text-blue-600 cursor-pointer">Periodic Table (118 IUPAC)</button>
+            <span>•</span>
+            <button onClick={scrollToFaq} className="hover:text-blue-600 cursor-pointer">FAQ Section</button>
             <span>•</span>
             <a href="/amp.html" className="hover:text-blue-600">AMP Edition</a>
             <span>•</span>

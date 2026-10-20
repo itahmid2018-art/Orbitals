@@ -24,13 +24,13 @@ interface Props {
 }
 
 const QUICK_EXAMPLES = [
-  { formula: 'H2O', label: 'H₂O (Water)', category: 'VSEPR' },
-  { formula: 'CH4', label: 'CH₄ (Methane)', category: 'VSEPR' },
-  { formula: 'NH3', label: 'NH₃ (Ammonia)', category: 'VSEPR' },
-  { formula: 'CO2', label: 'CO₂ (Carbon Dioxide)', category: 'VSEPR' },
-  { formula: 'BF3', label: 'BF₃ (Boron Trifluoride)', category: 'VSEPR' },
-  { formula: 'SF6', label: 'SF₆ (Sulfur Hexafluoride)', category: 'VSEPR' },
-  { formula: 'PCl5', label: 'PCl₅ (Phosphorus Pentachloride)', category: 'VSEPR' },
+  { formula: 'H2O', label: 'H₂O (Water)', category: 'VSEPR (Valence Shell Electron Pair Repulsion)' },
+  { formula: 'CH4', label: 'CH₄ (Methane)', category: 'VSEPR (Valence Shell Electron Pair Repulsion)' },
+  { formula: 'NH3', label: 'NH₃ (Ammonia)', category: 'VSEPR (Valence Shell Electron Pair Repulsion)' },
+  { formula: 'CO2', label: 'CO₂ (Carbon Dioxide)', category: 'VSEPR (Valence Shell Electron Pair Repulsion)' },
+  { formula: 'BF3', label: 'BF₃ (Boron Trifluoride)', category: 'VSEPR (Valence Shell Electron Pair Repulsion)' },
+  { formula: 'SF6', label: 'SF₆ (Sulfur Hexafluoride)', category: 'VSEPR (Valence Shell Electron Pair Repulsion)' },
+  { formula: 'PCl5', label: 'PCl₅ (Phosphorus Pentachloride)', category: 'VSEPR (Valence Shell Electron Pair Repulsion)' },
   { formula: 'C6H6', label: 'C₆H₆ (Benzene - 6π Cloud)', category: 'Resonance' },
   { formula: 'C2H4', label: 'C₂H₄ (Ethylene - π Bond)', category: 'Resonance' },
   { formula: 'C9H8O4', label: 'C₉H₈O₄ (Aspirin)', category: 'Bioactive' },
@@ -101,18 +101,19 @@ export const Header: React.FC<Props> = ({
             {/* Periodic Table Independent Page Trigger */}
             <button
               onClick={onOpenPeriodicTable}
-              title="Open full interactive Periodic Table of Elements"
+              title="Open full interactive Periodic Table of Elements (All 118 IUPAC [International Union of Pure and Applied Chemistry] Elements)"
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 transition-colors shadow-2xs active:scale-95"
             >
               <Table className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-              <span className="hidden xs:inline sm:inline">Periodic Table</span>
+              <span className="hidden md:inline">Periodic Table (IUPAC [International Union of Pure and Applied Chemistry])</span>
+              <span className="hidden xs:inline md:hidden">Periodic Table (IUPAC)</span>
               <span className="xs:hidden">Table</span>
             </button>
 
             {/* Reaction Predictor Trigger */}
             <button
               onClick={onOpenReactionPredictor}
-              title="Predict chemical reactions and mechanisms"
+              title="Predict chemical reactions, curved-arrow mechanisms & thermodynamic profiles"
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors shadow-2xs active:scale-95"
             >
               <Zap className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
@@ -123,7 +124,7 @@ export const Header: React.FC<Props> = ({
             {/* Tutorials & Library Trigger */}
             <button
               onClick={onOpenTutorials}
-              title="Guided Step-by-Step Tutorials & Example Library"
+              title="Guided Step-by-Step Chemistry Tutorials & Curated Molecule Library"
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-colors shadow-2xs active:scale-95"
             >
               <BookOpen className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -133,27 +134,28 @@ export const Header: React.FC<Props> = ({
             {/* VSEPR Guide Trigger */}
             <button
               onClick={onOpenVseprGuide}
-              title="VSEPR & Lewis Structure Solver"
+              title="VSEPR (Valence Shell Electron Pair Repulsion) Theory & Lewis Structure Solver"
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 transition-colors active:scale-95 cursor-pointer"
             >
               <HelpCircle className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-              <span>VSEPR</span>
+              <span className="hidden md:inline">VSEPR (Valence Shell Electron Pair Repulsion)</span>
+              <span className="md:hidden">VSEPR (Theory)</span>
             </button>
 
             {/* About Page Trigger */}
             <button
               onClick={onOpenAbout}
-              title="About Orbitalis (Ideas, Vision, Mission & Roadmap)"
+              title="About Orbitalis (Ideas, Vision, Mission, FAQ & Roadmap)"
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 transition-colors shadow-2xs active:scale-95 cursor-pointer"
             >
               <Info className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-              <span>About</span>
+              <span>About & FAQ</span>
             </button>
 
             {/* Fast AMP & HTMX Mode Link */}
             <a
               href="/amp.html"
-              title="Ultra-fast AMP & HTMX Accelerated Mobile Edition"
+              title="Ultra-fast AMP (Accelerated Mobile Pages) & HTMX (Hypertext Markup Extensions) Edition"
               className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition-colors shadow-2xs active:scale-95"
             >
               <span className="text-amber-600 font-bold">⚡</span>

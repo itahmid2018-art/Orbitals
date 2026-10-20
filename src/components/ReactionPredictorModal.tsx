@@ -77,7 +77,7 @@ export const ReactionPredictorModal: React.FC<Props> = ({
                   Chemical Reaction & Mechanism Predictor
                 </h2>
                 <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">
-                  FMO & Thermodynamic Engine
+                  FMO (Frontier Molecular Orbital) Engine
                 </span>
               </div>
               <p className="text-xs text-slate-500">

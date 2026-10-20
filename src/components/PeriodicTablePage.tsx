@@ -267,7 +267,7 @@ export const PeriodicTablePage: React.FC<Props> = ({
                     Periodic Table of Elements
                   </h1>
                   <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                    All 118 Elements (Complete IUPAC)
+                    All 118 Elements (Complete IUPAC [International Union of Pure and Applied Chemistry])
                   </span>
                 </div>
                 <p className="text-xs text-slate-500">
@@ -491,7 +491,7 @@ export const PeriodicTablePage: React.FC<Props> = ({
                 <span>Ionization energy increases ➔ and ⬆</span>
               </div>
               <span className="text-[11px] text-slate-400">
-                118 Elements Officially Verified (IUPAC)
+                118 Elements Officially Verified (IUPAC [International Union of Pure and Applied Chemistry])
               </span>
             </div>
           </div>
@@ -611,7 +611,7 @@ export const PeriodicTablePage: React.FC<Props> = ({
               </h3>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
-                  <span className="text-slate-400 text-[10px] block">Standard State (STP)</span>
+                  <span className="text-slate-400 text-[10px] block">Standard State (STP [Standard Temperature and Pressure])</span>
                   <span className="font-semibold text-slate-800 text-[11px] block mt-0.5">
                     {selectedElement.standardState}
                   </span>

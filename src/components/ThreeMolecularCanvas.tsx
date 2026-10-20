@@ -138,7 +138,7 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
   const contactShadowRef = useRef<THREE.Mesh | null>(null);
 
   // Mesh reference maps for animation & isolation
-  const atomMeshesRef = useRef<{ mesh: THREE.Mesh; initialPos: THREE.Vector3; id: number }[]>([]);
+  const atomMeshesRef = useRef<{ mesh: THREE.Object3D; initialPos: THREE.Vector3; id: number }[]>([]);
   const bondMeshesRef = useRef<{
     mesh: THREE.Mesh | THREE.Group;
     sourceIdx: number;
@@ -393,57 +393,67 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
         );
       const isIsolatedVisible = !isIsolationMode || activeSelectedAtom === null || idx === activeSelectedAtom || isDirectNeighbor;
 
-      const geom = new THREE.SphereGeometry(radius, 36, 36);
+      if (is2D) {
+        // In 2D Planar ChemView mode: Render ONLY the clean 2D atomic symbol badge (NO 3D sphere)
+        if (isIsolatedVisible) {
+          const sprite = createElementTextSprite(elem.symbol, elem.cpkColor, isSelected);
+          sprite.position.set(pos.x, pos.y, 0.05);
+          sprite.userData = { atomIndex: idx, atom, elementData: elem };
+          molGroup.add(sprite);
 
-      // Studio PBR Physical Material with real clearcoat & roughness
-      const mat = new THREE.MeshPhysicalMaterial({
-        color: isSelected ? 0x38bdf8 : new THREE.Color(elem.cpkColor),
-        roughness: elem.symbol === 'C' ? 0.35 : 0.22,
-        metalness: elem.period >= 3 && elem.group <= 12 ? 0.5 : 0.08,
-        clearcoat: 0.65,
-        clearcoatRoughness: 0.15,
-        emissive: isSelected ? 0x0284c7 : 0x000000,
-        emissiveIntensity: isSelected ? 0.45 : 0,
-        wireframe: renderStyle === 'wireframe',
-        transparent: isXRayMode || !isIsolatedVisible,
-        opacity: !isIsolatedVisible ? 0.12 : isXRayMode ? 0.35 : 1.0,
-        depthWrite: !isXRayMode && isIsolatedVisible,
-      });
+          atomMeshesRef.current.push({
+            mesh: sprite,
+            initialPos: pos.clone(),
+            id: idx,
+          });
+        }
+      } else {
+        // In 3D Quantum View mode: Render Studio PBR physical sphere
+        const geom = new THREE.SphereGeometry(radius, 36, 36);
 
-      const sphere = new THREE.Mesh(geom, mat);
-      sphere.position.copy(pos);
-      sphere.userData = { atomIndex: idx, atom, elementData: elem };
-      molGroup.add(sphere);
-
-      // In 2D Planar ChemView mode, render an atomic symbol sprite badge
-      if (is2D && isIsolatedVisible) {
-        const sprite = createElementTextSprite(elem.symbol, elem.cpkColor, isSelected);
-        sprite.position.set(pos.x, pos.y, 0.08);
-        molGroup.add(sprite);
-      }
-
-      atomMeshesRef.current.push({
-        mesh: sphere,
-        initialPos: pos.clone(),
-        id: idx,
-      });
-
-      // Partial charge visualization halo if polar
-      if (atom.partialCharge && Math.abs(atom.partialCharge) > 0.15 && isIsolatedVisible) {
-        const haloGeom = new THREE.SphereGeometry(radius * 1.35, 16, 16);
-        const haloMat = new THREE.MeshBasicMaterial({
-          color: atom.partialCharge > 0 ? 0x0ea5e9 : 0xef4444,
-          transparent: true,
-          opacity: 0.2,
-          wireframe: true,
+        // Studio PBR Physical Material with real clearcoat & roughness
+        const mat = new THREE.MeshPhysicalMaterial({
+          color: isSelected ? 0x38bdf8 : new THREE.Color(elem.cpkColor),
+          roughness: elem.symbol === 'C' ? 0.35 : 0.22,
+          metalness: elem.period >= 3 && elem.group <= 12 ? 0.5 : 0.08,
+          clearcoat: 0.65,
+          clearcoatRoughness: 0.15,
+          emissive: isSelected ? 0x0284c7 : 0x000000,
+          emissiveIntensity: isSelected ? 0.45 : 0,
+          wireframe: renderStyle === 'wireframe',
+          transparent: isXRayMode || !isIsolatedVisible,
+          opacity: !isIsolatedVisible ? 0.12 : isXRayMode ? 0.35 : 1.0,
+          depthWrite: !isXRayMode && isIsolatedVisible,
         });
-        const halo = new THREE.Mesh(haloGeom, haloMat);
-        halo.position.copy(pos);
-        dynGroup.add(halo);
+
+        const sphere = new THREE.Mesh(geom, mat);
+        sphere.position.copy(pos);
+        sphere.userData = { atomIndex: idx, atom, elementData: elem };
+        molGroup.add(sphere);
+
+        atomMeshesRef.current.push({
+          mesh: sphere,
+          initialPos: pos.clone(),
+          id: idx,
+        });
+
+        // Partial charge visualization halo if polar
+        if (atom.partialCharge && Math.abs(atom.partialCharge) > 0.15 && isIsolatedVisible) {
+          const haloGeom = new THREE.SphereGeometry(radius * 1.35, 16, 16);
+          const haloMat = new THREE.MeshBasicMaterial({
+            color: atom.partialCharge > 0 ? 0x0ea5e9 : 0xef4444,
+            transparent: true,
+            opacity: 0.2,
+            wireframe: true,
+          });
+          const halo = new THREE.Mesh(haloGeom, haloMat);
+          halo.position.copy(pos);
+          dynGroup.add(halo);
+        }
       }
 
-      // Orbital representations for central / key atoms
-      if (orbitalMode !== 'none' && (isCentral || atoms.length <= 6) && isIsolatedVisible) {
+      // Orbital representations for central / key atoms (3D mode only)
+      if (!is2D && orbitalMode !== 'none' && (isCentral || atoms.length <= 6) && isIsolatedVisible) {
         if (orbitalMode === 'hybrid' || orbitalMode === 'all') {
           const neighbors = bonds
             .filter((b) => b.sourceIndex === idx || b.targetIndex === idx)
@@ -498,7 +508,7 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
       }
     });
 
-    // 2. Create Bond Meshes with Studio PBR Finish
+    // 2. Create Bond Meshes
     bonds.forEach((bond) => {
       const a1 = atoms[bond.sourceIndex];
       const a2 = atoms[bond.targetIndex];
@@ -511,12 +521,7 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
         ? (pos2DMap.get(bond.targetIndex) || new THREE.Vector3(a2.x - cx, a2.y - cy, 0))
         : new THREE.Vector3(a2.x - cx, a2.y - cy, a2.z - cz);
       const dist = p1.distanceTo(p2);
-      const dir = p2.clone().sub(p1).normalize();
-      const mid = p1.clone().add(p2).multiplyScalar(0.5);
-
-      const bondRadius = is2D ? 0.08 : renderStyle === 'wireframe' ? 0.05 : renderStyle === 'stick' ? 0.12 : 0.09;
-      const up = new THREE.Vector3(0, 1, 0);
-      const quaternion = new THREE.Quaternion().setFromUnitVectors(up, dir);
+      if (dist < 0.001) return;
 
       const isBondIsolated =
         !isIsolationMode ||
@@ -526,27 +531,112 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
 
       const bondGroup = new THREE.Group();
 
-      if (bond.order === 1) {
-        const geom = new THREE.CylinderGeometry(bondRadius, bondRadius, dist, 24);
-        const mat = new THREE.MeshPhysicalMaterial({
-          color: 0x94a3b8,
-          roughness: 0.25,
-          metalness: 0.15,
-          clearcoat: 0.5,
-          wireframe: renderStyle === 'wireframe',
-          transparent: !isBondIsolated,
-          opacity: !isBondIsolated ? 0.15 : 1.0,
-        });
-        const cyl = new THREE.Mesh(geom, mat);
-        cyl.position.copy(mid);
-        cyl.quaternion.copy(quaternion);
-        bondGroup.add(cyl);
-      } else if (bond.order === 2) {
-        const offset = 0.12;
-        const perp = new THREE.Vector3(-dir.y, dir.x, 0).normalize().multiplyScalar(offset);
+      if (is2D) {
+        // Clean 2D Planar Chemical Bonds (Orthogonal flat planar strips in XY plane)
+        const dir = p2.clone().sub(p1).normalize();
+        const mid = p1.clone().add(p2).multiplyScalar(0.5);
+        const angle = Math.atan2(dir.y, dir.x);
+        const perp = new THREE.Vector3(-dir.y, dir.x, 0).normalize();
+        const bondColor = isDarkBg ? 0x94a3b8 : 0x475569;
+        const bondWidth = 0.055;
 
-        [-1, 1].forEach((sign) => {
-          const geom = new THREE.CylinderGeometry(bondRadius * 0.85, bondRadius * 0.85, dist, 24);
+        const createFlatLine = (center: THREE.Vector3, length: number) => {
+          const planeGeom = new THREE.PlaneGeometry(length, bondWidth);
+          planeGeom.rotateZ(angle);
+          const planeMat = new THREE.MeshBasicMaterial({
+            color: bondColor,
+            side: THREE.DoubleSide,
+            transparent: !isBondIsolated,
+            opacity: !isBondIsolated ? 0.2 : 1.0,
+          });
+          const plane = new THREE.Mesh(planeGeom, planeMat);
+          plane.position.set(center.x, center.y, 0.01);
+          return plane;
+        };
+
+        if (bond.order === 1) {
+          bondGroup.add(createFlatLine(mid, dist));
+        } else if (bond.order === 2) {
+          const offset = 0.075;
+          bondGroup.add(createFlatLine(mid.clone().add(perp.clone().multiplyScalar(offset)), dist));
+          bondGroup.add(createFlatLine(mid.clone().add(perp.clone().multiplyScalar(-offset)), dist));
+        } else if (bond.order === 3) {
+          const offset = 0.095;
+          bondGroup.add(createFlatLine(mid, dist));
+          bondGroup.add(createFlatLine(mid.clone().add(perp.clone().multiplyScalar(offset)), dist));
+          bondGroup.add(createFlatLine(mid.clone().add(perp.clone().multiplyScalar(-offset)), dist));
+        } else {
+          // 1.5 order / aromatic
+          const offset = 0.075;
+          bondGroup.add(createFlatLine(mid.clone().add(perp.clone().multiplyScalar(offset)), dist));
+          bondGroup.add(createFlatLine(mid.clone().add(perp.clone().multiplyScalar(-offset)), dist * 0.85));
+        }
+      } else {
+        // 3D Mode: Studio PBR Physical Cylinders
+        const dir = p2.clone().sub(p1).normalize();
+        const mid = p1.clone().add(p2).multiplyScalar(0.5);
+        const bondRadius = renderStyle === 'wireframe' ? 0.05 : renderStyle === 'stick' ? 0.12 : 0.09;
+        const up = new THREE.Vector3(0, 1, 0);
+        const quaternion = new THREE.Quaternion().setFromUnitVectors(up, dir);
+
+        if (bond.order === 1) {
+          const geom = new THREE.CylinderGeometry(bondRadius, bondRadius, dist, 24);
+          const mat = new THREE.MeshPhysicalMaterial({
+            color: 0x94a3b8,
+            roughness: 0.25,
+            metalness: 0.15,
+            clearcoat: 0.5,
+            wireframe: renderStyle === 'wireframe',
+            transparent: !isBondIsolated,
+            opacity: !isBondIsolated ? 0.15 : 1.0,
+          });
+          const cyl = new THREE.Mesh(geom, mat);
+          cyl.position.copy(mid);
+          cyl.quaternion.copy(quaternion);
+          bondGroup.add(cyl);
+        } else if (bond.order === 2) {
+          const offset = 0.12;
+          const perp = new THREE.Vector3(-dir.y, dir.x, 0).normalize().multiplyScalar(offset);
+
+          [-1, 1].forEach((sign) => {
+            const geom = new THREE.CylinderGeometry(bondRadius * 0.85, bondRadius * 0.85, dist, 24);
+            const mat = new THREE.MeshPhysicalMaterial({
+              color: 0x64748b,
+              roughness: 0.25,
+              metalness: 0.15,
+              clearcoat: 0.5,
+              transparent: !isBondIsolated,
+              opacity: !isBondIsolated ? 0.15 : 1.0,
+            });
+            const cyl = new THREE.Mesh(geom, mat);
+            cyl.position.copy(mid.clone().add(perp.clone().multiplyScalar(sign)));
+            cyl.quaternion.copy(quaternion);
+            bondGroup.add(cyl);
+          });
+        } else if (bond.order === 3) {
+          const geom1 = new THREE.CylinderGeometry(bondRadius * 0.75, bondRadius * 0.75, dist, 24);
+          const mat = new THREE.MeshPhysicalMaterial({
+            color: 0x475569,
+            roughness: 0.25,
+            metalness: 0.15,
+            clearcoat: 0.5,
+            transparent: !isBondIsolated,
+            opacity: !isBondIsolated ? 0.15 : 1.0,
+          });
+          const c1 = new THREE.Mesh(geom1, mat);
+          c1.position.copy(mid);
+          c1.quaternion.copy(quaternion);
+          bondGroup.add(c1);
+
+          const perp1 = new THREE.Vector3(-dir.y, dir.x, 0).normalize().multiplyScalar(0.14);
+          [-1, 1].forEach((sign) => {
+            const cyl = new THREE.Mesh(geom1.clone(), mat);
+            cyl.position.copy(mid.clone().add(perp1.clone().multiplyScalar(sign)));
+            cyl.quaternion.copy(quaternion);
+            bondGroup.add(cyl);
+          });
+        } else if (bond.order === 1.5) {
+          const geom = new THREE.CylinderGeometry(bondRadius, bondRadius, dist, 24);
           const mat = new THREE.MeshPhysicalMaterial({
             color: 0x64748b,
             roughness: 0.25,
@@ -556,46 +646,10 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
             opacity: !isBondIsolated ? 0.15 : 1.0,
           });
           const cyl = new THREE.Mesh(geom, mat);
-          cyl.position.copy(mid.clone().add(perp.clone().multiplyScalar(sign)));
+          cyl.position.copy(mid);
           cyl.quaternion.copy(quaternion);
           bondGroup.add(cyl);
-        });
-      } else if (bond.order === 3) {
-        const geom1 = new THREE.CylinderGeometry(bondRadius * 0.75, bondRadius * 0.75, dist, 24);
-        const mat = new THREE.MeshPhysicalMaterial({
-          color: 0x475569,
-          roughness: 0.25,
-          metalness: 0.15,
-          clearcoat: 0.5,
-          transparent: !isBondIsolated,
-          opacity: !isBondIsolated ? 0.15 : 1.0,
-        });
-        const c1 = new THREE.Mesh(geom1, mat);
-        c1.position.copy(mid);
-        c1.quaternion.copy(quaternion);
-        bondGroup.add(c1);
-
-        const perp1 = new THREE.Vector3(-dir.y, dir.x, 0).normalize().multiplyScalar(0.14);
-        [-1, 1].forEach((sign) => {
-          const cyl = new THREE.Mesh(geom1.clone(), mat);
-          cyl.position.copy(mid.clone().add(perp1.clone().multiplyScalar(sign)));
-          cyl.quaternion.copy(quaternion);
-          bondGroup.add(cyl);
-        });
-      } else if (bond.order === 1.5) {
-        const geom = new THREE.CylinderGeometry(bondRadius, bondRadius, dist, 24);
-        const mat = new THREE.MeshPhysicalMaterial({
-          color: 0x64748b,
-          roughness: 0.25,
-          metalness: 0.15,
-          clearcoat: 0.5,
-          transparent: !isBondIsolated,
-          opacity: !isBondIsolated ? 0.15 : 1.0,
-        });
-        const cyl = new THREE.Mesh(geom, mat);
-        cyl.position.copy(mid);
-        cyl.quaternion.copy(quaternion);
-        bondGroup.add(cyl);
+        }
       }
 
       molGroup.add(bondGroup);
@@ -607,14 +661,14 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
       });
     });
 
-    // 3. Electrostatic Potential Map (ESP) Molecular Surface
-    if (renderStyle === 'esp_surface') {
+    // 3. Electrostatic Potential Map (ESP) Molecular Surface (3D mode only)
+    if (!is2D && renderStyle === 'esp_surface') {
       const espSurface = createEspMolecularSurface(atoms, bonds, new THREE.Vector3(cx, cy, cz));
       molGroup.add(espSurface);
     }
 
-    // 4. Dipole Moment Vector Arrow
-    if (showDipole && dipoleDebye > 0.1) {
+    // 4. Dipole Moment Vector Arrow (3D mode only)
+    if (!is2D && showDipole && dipoleDebye > 0.1) {
       const arrowDir = new THREE.Vector3(0, 0, 1).normalize();
       const arrowLength = Math.min(3.5, 0.8 + dipoleDebye * 0.8);
       const arrowOrigin = new THREE.Vector3(0, 0, -arrowLength * 0.5);
@@ -623,15 +677,38 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
       dynGroup.add(arrow);
     }
 
+    // Toggle contact shadow and orbitals group visibility based on 2D mode
+    if (contactShadowRef.current) {
+      contactShadowRef.current.visible = !is2D;
+    }
+    if (orbitalsGroupRef.current) {
+      orbitalsGroupRef.current.visible = !is2D;
+    }
+
     // Auto-frame camera based on molecule radius
     let maxR = 2.0;
     atoms.forEach((a) => {
-      const r = Math.hypot(a.x - cx, a.y - cy, a.z - cz);
+      const r = is2D
+        ? Math.hypot((pos2DMap.get(a.id ?? 0)?.x ?? a.x - cx), (pos2DMap.get(a.id ?? 0)?.y ?? a.y - cy))
+        : Math.hypot(a.x - cx, a.y - cy, a.z - cz);
       if (r > maxR) maxR = r;
     });
     cameraDistanceRef.current = Math.max(6, maxR * 2.8);
     cameraSphericalRef.current.radius = cameraDistanceRef.current;
-    updateCameraPosition();
+    if (is2D) {
+      cameraSphericalRef.current.theta = 0;
+      cameraSphericalRef.current.phi = Math.PI / 2;
+      if (cameraRef.current) {
+        cameraRef.current.position.set(0, 0, cameraDistanceRef.current);
+        cameraRef.current.lookAt(0, 0, 0);
+      }
+      if (moleculeGroupRef.current) {
+        moleculeGroupRef.current.position.set(0, 0, 0);
+        moleculeGroupRef.current.rotation.set(0, 0, 0);
+      }
+    } else {
+      updateCameraPosition();
+    }
   }, [
     atoms,
     bonds,
@@ -645,6 +722,7 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
     measurement.atoms,
     isXRayMode,
     isIsolationMode,
+    isDarkBg,
     updateCameraPosition,
   ]);
 
@@ -694,14 +772,14 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
       const delta = clockRef.current.getDelta();
       const time = clockRef.current.getElapsedTime();
 
-      // Smooth auto-rotation
-      if (autoRotate && moleculeGroupRef.current) {
+      // Smooth auto-rotation (3D mode only)
+      if (renderStyle !== '2d_projected' && autoRotate && moleculeGroupRef.current) {
         cameraSphericalRef.current.theta += delta * 0.4;
         updateCameraPosition();
       }
 
-      // Bonding Dynamics & Normal Mode Vibrational Simulation
-      if (isVibrating && activeVibrationalMode && atomMeshesRef.current.length > 0) {
+      // Bonding Dynamics & Normal Mode Vibrational Simulation (3D mode only)
+      if (renderStyle !== '2d_projected' && isVibrating && activeVibrationalMode && atomMeshesRef.current.length > 0) {
         const freqFactor = (activeVibrationalMode.frequencyCm1 || 1000) / 400;
         const phase = time * freqFactor * 3.5;
         const amplitude = 0.18;
@@ -714,7 +792,7 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
           mesh.position.y = initialPos.y + disp.y * Math.sin(phase) * amplitude + (Math.random() - 0.5) * thermalJitter;
           mesh.position.z = initialPos.z + disp.z * Math.sin(phase) * amplitude + (Math.random() - 0.5) * thermalJitter;
         });
-      } else if (temperatureK > 0 && atomMeshesRef.current.length > 0) {
+      } else if (renderStyle !== '2d_projected' && temperatureK > 0 && atomMeshesRef.current.length > 0) {
         const thermalJitter = (temperatureK / 500) * 0.05;
         atomMeshesRef.current.forEach(({ mesh, initialPos }) => {
           mesh.position.x = initialPos.x + (Math.random() - 0.5) * thermalJitter;
@@ -730,7 +808,7 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
 
     animId = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animId);
-  }, [autoRotate, isVibrating, activeVibrationalMode, temperatureK, updateCameraPosition]);
+  }, [autoRotate, isVibrating, activeVibrationalMode, temperatureK, renderStyle, updateCameraPosition]);
 
   // Mouse Orbit Event Handlers
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -792,7 +870,16 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
     e.preventDefault();
     const zoomDelta = e.deltaY * 0.01;
     cameraSphericalRef.current.radius = Math.max(3, Math.min(60, cameraSphericalRef.current.radius + zoomDelta));
-    updateCameraPosition();
+    if (renderStyle === '2d_projected') {
+      cameraSphericalRef.current.theta = 0;
+      cameraSphericalRef.current.phi = Math.PI / 2;
+      if (cameraRef.current) {
+        cameraRef.current.position.set(0, 0, cameraSphericalRef.current.radius);
+        cameraRef.current.lookAt(0, 0, 0);
+      }
+    } else {
+      updateCameraPosition();
+    }
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -870,7 +957,16 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
         Math.min(60, cameraSphericalRef.current.radius + zoomFactor)
       );
       touchPinchDistRef.current = currentDist;
-      updateCameraPosition();
+      if (renderStyle === '2d_projected') {
+        cameraSphericalRef.current.theta = 0;
+        cameraSphericalRef.current.phi = Math.PI / 2;
+        if (cameraRef.current) {
+          cameraRef.current.position.set(0, 0, cameraSphericalRef.current.radius);
+          cameraRef.current.lookAt(0, 0, 0);
+        }
+      } else {
+        updateCameraPosition();
+      }
     }
   };
 
@@ -986,11 +1082,11 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
     };
   }, [isFullscreen]);
 
-  // Align camera strictly to flat orthographic view when entering 2D mode
+  // Align camera strictly to flat orthographic view when entering 2D mode, and toggle shadow/orbitals visibility
   useEffect(() => {
     if (renderStyle === '2d_projected') {
+      cameraSphericalRef.current = { radius: cameraDistanceRef.current, theta: 0, phi: Math.PI / 2 };
       if (cameraRef.current) {
-        cameraSphericalRef.current = { radius: cameraDistanceRef.current, theta: 0, phi: Math.PI / 2 };
         cameraRef.current.position.set(0, 0, cameraDistanceRef.current);
         cameraRef.current.lookAt(0, 0, 0);
       }
@@ -998,8 +1094,23 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
         moleculeGroupRef.current.position.set(0, 0, 0);
         moleculeGroupRef.current.rotation.set(0, 0, 0);
       }
+      if (contactShadowRef.current) {
+        contactShadowRef.current.visible = false;
+      }
+      if (orbitalsGroupRef.current) {
+        orbitalsGroupRef.current.visible = false;
+      }
+    } else {
+      if (contactShadowRef.current) {
+        contactShadowRef.current.visible = true;
+      }
+      if (orbitalsGroupRef.current) {
+        orbitalsGroupRef.current.visible = true;
+      }
+      cameraSphericalRef.current = { radius: cameraDistanceRef.current, theta: Math.PI / 4, phi: Math.PI / 3 };
+      updateCameraPosition();
     }
-  }, [renderStyle]);
+  }, [renderStyle, updateCameraPosition]);
 
   const toggleFullscreen = () => {
     if (!containerRef.current) return;
@@ -1047,20 +1158,20 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
       <div className="absolute top-2 sm:top-3 left-2 sm:left-3 flex flex-wrap items-center gap-1.5 z-10 max-w-[58%] sm:max-w-none">
         <div className="px-2 sm:px-2.5 py-1 rounded-lg bg-slate-900/90 border border-slate-700/70 shadow-lg text-slate-200 text-[11px] sm:text-xs flex items-center gap-1.5 sm:gap-2">
           <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-          <span className="font-semibold whitespace-nowrap">Studio PBR</span>
-          <span className="text-slate-400 text-[10px] hidden md:inline">ACES Tonemapped</span>
+          <span className="font-semibold whitespace-nowrap">Studio PBR (Physically-Based Rendering)</span>
+          <span className="text-slate-400 text-[10px] hidden md:inline">ACES (Academy Color Encoding System)</span>
         </div>
 
         {renderStyle === '2d_projected' ? (
           <div className="px-2 sm:px-2.5 py-1 rounded-lg bg-amber-500/90 border border-amber-300 shadow-lg text-slate-950 text-[11px] sm:text-xs flex items-center gap-1.5 font-bold">
             <span className="w-2 h-2 rounded-full bg-slate-950 shrink-0" />
             <span>2D Planar ChemView</span>
-            <span className="text-slate-900/80 text-[10px] hidden sm:inline">Orthogonal Structure</span>
+            <span className="text-slate-900/80 text-[10px] hidden sm:inline">Orthogonal Projection</span>
           </div>
         ) : renderStyle === 'esp_surface' ? (
           <div className="px-2 sm:px-2.5 py-1 rounded-lg bg-slate-900/90 border border-amber-500/50 shadow-lg text-[11px] sm:text-xs flex items-center gap-1.5 sm:gap-2">
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
-            <span className="font-semibold text-amber-300 whitespace-nowrap">ESP Surface</span>
+            <span className="font-semibold text-amber-300 whitespace-nowrap">ESP (Electrostatic Potential) Surface</span>
             <span className="text-slate-300 text-[10px] hidden sm:inline">Electron Density</span>
           </div>
         ) : orbitalMode !== 'none' ? (
@@ -1195,7 +1306,7 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
           <div className="flex items-center justify-between mb-1.5">
             <div className="flex items-center gap-1.5 font-bold text-slate-100 text-[11px]">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Electrostatic Potential Map (ESP)</span>
+              <span>Electrostatic Potential Map (ESP [Electrostatic Potential])</span>
             </div>
             <span className="text-[10px] text-amber-400 font-mono font-semibold">V(r)</span>
           </div>
@@ -1276,11 +1387,11 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
               <span className="text-[10px] font-bold uppercase text-slate-400 px-1 shrink-0">Style:</span>
               {[
                 { id: 'ball_and_stick', label: 'Ball & Stick' },
-                { id: 'space_filling', label: 'vdW' },
+                { id: 'space_filling', label: 'vdW (van der Waals)' },
                 { id: 'stick', label: 'Stick' },
                 { id: 'wireframe', label: 'Wire' },
-                { id: 'esp_surface', label: '⚡ ESP Map' },
-                { id: '2d_projected', label: '📐 2D Planar' },
+                { id: 'esp_surface', label: '⚡ ESP (Electrostatic Potential)' },
+                { id: '2d_projected', label: '📐 2D Planar ChemView' },
               ].map((item) => (
                 <button
                   key={item.id}

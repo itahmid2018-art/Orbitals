@@ -380,7 +380,7 @@ export const PropertyInspector: React.FC<Props> = ({ properties, atoms = [] }) =
           <div className="flex items-center gap-2">
             <Compass className="w-4 h-4 text-blue-600" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700">
-              VSEPR & Orbital Hybridization
+              VSEPR (Valence Shell Electron Pair Repulsion) & Orbitals
             </h3>
           </div>
           <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 font-mono">
@@ -460,7 +460,7 @@ export const PropertyInspector: React.FC<Props> = ({ properties, atoms = [] }) =
           </div>
 
           <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-100">
-            <span className="text-slate-400 block text-[11px]">Polar Surface (TPSA)</span>
+            <span className="text-slate-400 block text-[10px]">Polar Surface (TPSA [Topological Polar Surface Area])</span>
             <span className="font-semibold font-mono text-slate-800 mt-0.5 block">
               {properties.tpsa !== undefined ? `${properties.tpsa} Å²` : '—'}
             </span>
@@ -523,7 +523,7 @@ export const PropertyInspector: React.FC<Props> = ({ properties, atoms = [] }) =
               )}
             </div>
             <p className="text-[11px] text-slate-500">
-              Conformational flexibility (Rotatable Bonds ≤ 10, TPSA ≤ 140 Å²).
+              Conformational flexibility (Rotatable Bonds ≤ 10, TPSA [Topological Polar Surface Area] ≤ 140 Å²).
             </p>
           </div>
         </div>
@@ -540,7 +540,7 @@ export const PropertyInspector: React.FC<Props> = ({ properties, atoms = [] }) =
             <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100 text-xs">
               <div className="truncate pr-2">
                 <span className="text-slate-400 text-[10px] block uppercase font-mono">
-                  SMILES
+                  SMILES (Simplified Molecular Input Line Entry System)
                 </span>
                 <span className="font-mono text-slate-800 text-[11px] select-all">
                   {properties.smiles}
@@ -549,7 +549,7 @@ export const PropertyInspector: React.FC<Props> = ({ properties, atoms = [] }) =
               <button
                 onClick={() => copyToClipboard(properties.smiles!, 'smiles')}
                 className="p-1.5 rounded hover:bg-slate-200 text-slate-500 transition-colors shrink-0"
-                title="Copy SMILES"
+                title="Copy SMILES (Simplified Molecular Input Line Entry System)"
               >
                 {copiedKey === 'smiles' ? (
                   <Check className="w-3.5 h-3.5 text-emerald-600" />
@@ -564,7 +564,7 @@ export const PropertyInspector: React.FC<Props> = ({ properties, atoms = [] }) =
             <div className="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-100 text-xs">
               <div className="truncate pr-2">
                 <span className="text-slate-400 text-[10px] block uppercase font-mono">
-                  InChIKey
+                  InChIKey (International Chemical Identifier Key)
                 </span>
                 <span className="font-mono text-slate-800 text-[11px] select-all">
                   {properties.inchiKey}
@@ -573,7 +573,7 @@ export const PropertyInspector: React.FC<Props> = ({ properties, atoms = [] }) =
               <button
                 onClick={() => copyToClipboard(properties.inchiKey!, 'inchikey')}
                 className="p-1.5 rounded hover:bg-slate-200 text-slate-500 transition-colors shrink-0"
-                title="Copy InChIKey"
+                title="Copy InChIKey (International Chemical Identifier Key)"
               >
                 {copiedKey === 'inchikey' ? (
                   <Check className="w-3.5 h-3.5 text-emerald-600" />

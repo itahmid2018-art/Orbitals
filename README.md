@@ -16,17 +16,19 @@ The platform opens directly into a comprehensive **About & Vision Landing Page**
 
 ## 🌟 Key Capabilities & Feature Matrix
 
-### 1. Default About & Vision Landing Page (Home)
+### 1. Default About & Vision Landing Page (Home) & Comprehensive FAQ
 - **The Project Idea & Genesis**: Solves the "2D Abstraction Trap" where students struggle to translate flat paper formulas into spatial quantum reality, while eliminating the installation friction and steep learning curves of legacy modeling suites.
 - **Vision**: Demystifying the subatomic and molecular universe, providing universal, zero-install, zero-cost access on any device.
-- **Mission**: High-precision chemistry at the speed of thought, uniting real-time 3D orbital dynamics, VSEPR geometry calculation, and electrostatic potential mapping.
-- **Engineered Capabilities**: Interactive 3D WebGL PBR, full 118-element periodic table, live stoichiometric mass breakdowns, and multi-platform optimization.
+- **Mission**: High-precision chemistry at the speed of thought, uniting real-time 3D orbital dynamics, VSEPR (Valence Shell Electron Pair Repulsion) geometry calculation, and ESP (Electrostatic Potential) mapping.
+- **Engineered Capabilities**: Interactive 3D WebGL (Web Graphics Library) Studio PBR (Physically-Based Rendering), full 118-element IUPAC (International Union of Pure and Applied Chemistry) periodic table, live stoichiometric mass breakdowns, and multi-platform optimization.
 - **Future Ambitions & Roadmap**:
-  - *PDB / Mol / SDF Drag-and-Drop Ingestion*: Native in-browser parsing of Protein Data Bank macromolecular structures.
-  - *Frontier Orbitals (HOMO / LUMO)*: Boundary isosurface calculation for reactivity forecasting.
+  - *PDB (Protein Data Bank) / Mol / SDF (Structure-Data File) Drag-and-Drop Ingestion*: Native in-browser parsing of macromolecular structures.
+  - *Frontier Orbitals (HOMO [Highest Occupied Molecular Orbital] / LUMO [Lowest Unoccupied Molecular Orbital])*: Boundary isosurface calculation for reactivity forecasting.
   - *3D Reaction Coordinate Pathways*: Animated transition states synchronized with potential energy curves $E_{\text{rxn}}$.
-  - *WebXR Augmented Reality (AR)*: Projecting full-scale 3D molecules onto physical classroom desks and laboratory benches.
-- **Interactive FAQ Accordion**: Explanations of VSEPR theory, PubChem conformer provenance, wave-function phase conventions, and export formats.
+  - *WebXR (Extended Reality) Augmented Reality (AR)*: Projecting full-scale 3D molecules onto physical classroom desks and laboratory benches.
+- **Comprehensive Interactive FAQ Section**:
+  - Searchable knowledge base with category filters (*All Questions*, *Core Chemistry & VSEPR*, *3D & 2D Canvas*, *Periodic Table & IUPAC*, *Reactions & Spectroscopy*, *Mobile & Web Tech*).
+  - Clear explanations for 14+ common questions including VSEPR theory derivation, IUPAC nomenclature and standards, Studio PBR lighting, 2D Planar ChemView projection, CPK (Corey-Pauling-Koltun) atom colors, ESP potential gradients, quantum orbital phase signs, PubChem API integration, measurement tools, reaction mechanism prediction, and PWA (Progressive Web Application) vs. AMP (Accelerated Mobile Pages) modes.
 
 ### 2. Static Floating Icon-Based Sidebar Menu
 - **Persistent Floating Dock**: Anchored smoothly on the left edge (`fixed left-2 sm:left-4 top-1/2 -translate-y-1/2`) with high-contrast frosted glass backdrop blur (`bg-slate-900/90`), subtle border, and elevation shadow.
@@ -230,6 +232,7 @@ npm run lint
 | **Full-Screen Focus Mode** | Click the Full-Screen icon (`Maximize2`) in the 3D viewport toolbar. | Expands 3D viewport to fill 100% of the screen/window with updated aspect ratio; exits via `Minimize2` or `Escape`. |
 | **AMP & HTMX Mobile View** | Open `/amp.html` in browser. | Valid AMP fast-loading page with HTMX interactions and instant chemical calculations. |
 | **Favicons & PWA** | Check browser tab icon or inspect `/manifest.json`. | Displays custom vector SVG orbital icon; serves 16x16/32x32 PNGs, 180x180 Apple Touch icon, and maskable PWA icons. |
+| **Interactive FAQ Section** | On About page, search for "VSEPR" or filter by category. | Dynamically filters questions; clicking any card expands the detailed scientific answer with full forms in brackets. |
 
 ---
 

@@ -40,7 +40,7 @@ export const FloatingSidebar: React.FC<Props> = ({
       <div className="relative group">
         <button
           onClick={() => onNavigate('about')}
-          title="About & Vision (Mission, Ideas, Features & Roadmap)"
+          title="About & Vision (Mission, Ideas, Features, FAQ & Roadmap)"
           className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             currentPage === 'about'
               ? 'bg-blue-600 text-white shadow-md shadow-blue-500/40 ring-2 ring-cyan-400 scale-105'
@@ -50,7 +50,7 @@ export const FloatingSidebar: React.FC<Props> = ({
           <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" />
         </button>
         <span className="absolute left-12 sm:left-14 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 shadow-xl z-50">
-          About & Vision (Home)
+          About & Vision (Home & FAQ)
         </span>
       </div>
 
@@ -58,7 +58,7 @@ export const FloatingSidebar: React.FC<Props> = ({
       <div className="relative group">
         <button
           onClick={() => onNavigate('workbench')}
-          title="3D Molecular Workbench (Studio PBR, Orbitals, Dynamics)"
+          title="3D Molecular Workbench (Studio PBR [Physically-Based Rendering], Orbitals, Dynamics)"
           className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             currentPage === 'workbench'
               ? 'bg-blue-600 text-white shadow-md shadow-blue-500/40 ring-2 ring-cyan-400 scale-105'
@@ -68,7 +68,7 @@ export const FloatingSidebar: React.FC<Props> = ({
           <FlaskConical className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
         <span className="absolute left-12 sm:left-14 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 shadow-xl z-50">
-          3D Molecular Workbench
+          3D Workbench (PBR [Physically-Based Rendering])
         </span>
       </div>
 
@@ -76,7 +76,7 @@ export const FloatingSidebar: React.FC<Props> = ({
       <div className="relative group">
         <button
           onClick={() => onNavigate('periodic-table')}
-          title="Periodic Table of Elements (All 118 Elements IUPAC)"
+          title="Periodic Table of Elements (All 118 IUPAC [International Union of Pure and Applied Chemistry] Elements)"
           className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
             currentPage === 'periodic-table'
               ? 'bg-teal-600 text-white shadow-md shadow-teal-500/40 ring-2 ring-emerald-400 scale-105'
@@ -86,7 +86,7 @@ export const FloatingSidebar: React.FC<Props> = ({
           <Table className="w-4 h-4 sm:w-5 sm:h-5 text-teal-400" />
         </button>
         <span className="absolute left-12 sm:left-14 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 shadow-xl z-50">
-          Periodic Table (118 Elements)
+          Periodic Table (118 IUPAC [International Union of Pure and Applied Chemistry] Elements)
         </span>
       </div>
 
@@ -102,7 +102,7 @@ export const FloatingSidebar: React.FC<Props> = ({
           <Zap className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
         </button>
         <span className="absolute left-12 sm:left-14 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 shadow-xl z-50">
-          Reaction Predictor
+          Reaction Predictor & Mechanisms
         </span>
       </div>
 
@@ -110,13 +110,13 @@ export const FloatingSidebar: React.FC<Props> = ({
       <div className="relative group">
         <button
           onClick={onOpenVseprGuide}
-          title="VSEPR Theory & Lewis Structure Solver"
+          title="VSEPR (Valence Shell Electron Pair Repulsion) & Lewis Structure Solver"
           className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-slate-300 hover:text-blue-300 hover:bg-slate-800 transition-all cursor-pointer"
         >
           <HelpCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400" />
         </button>
         <span className="absolute left-12 sm:left-14 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 shadow-xl z-50">
-          VSEPR & Lewis Solver
+          VSEPR (Valence Shell Electron Pair Repulsion) Solver
         </span>
       </div>
 
@@ -130,7 +130,7 @@ export const FloatingSidebar: React.FC<Props> = ({
           <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-emerald-400" />
         </button>
         <span className="absolute left-12 sm:left-14 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 shadow-xl z-50">
-          Guided Tutorials
+          Guided Chemistry Tutorials
         </span>
       </div>
 
@@ -140,7 +140,7 @@ export const FloatingSidebar: React.FC<Props> = ({
       <div className="relative group">
         <button
           onClick={onToggle2D}
-          title={is2DActive ? 'Switch to 3D Quantum View' : 'Switch to 2D Planar Chemical View'}
+          title={is2DActive ? 'Switch to 3D Quantum View (Studio PBR [Physically-Based Rendering])' : 'Switch to 2D Planar Chemical View (Orthogonal Projection)'}
           className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer font-bold text-xs ${
             is2DActive
               ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/40 ring-2 ring-amber-300 font-extrabold scale-105'
@@ -150,7 +150,7 @@ export const FloatingSidebar: React.FC<Props> = ({
           {is2DActive ? '2D' : '3D'}
         </button>
         <span className="absolute left-12 sm:left-14 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 shadow-xl z-50">
-          {is2DActive ? 'Active: 2D Planar (Click for 3D)' : 'Switch to 2D Planar View'}
+          {is2DActive ? 'Active: 2D Planar ChemView (Click for 3D)' : 'Switch to 2D Planar ChemView'}
         </span>
       </div>
 
@@ -158,13 +158,13 @@ export const FloatingSidebar: React.FC<Props> = ({
       <div className="relative group">
         <a
           href="/amp.html"
-          title="Ultra-fast AMP & HTMX Mobile Edition (Sub-50ms)"
+          title="Ultra-fast AMP (Accelerated Mobile Pages) & HTMX (Hypertext Markup Extensions) Mobile Edition (Sub-50ms)"
           className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-amber-400 hover:text-amber-300 hover:bg-slate-800 transition-all cursor-pointer"
         >
           <span className="text-sm font-black">⚡</span>
         </a>
         <span className="absolute left-12 sm:left-14 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 shadow-xl z-50">
-          Fast AMP & HTMX Mode (⚡)
+          Fast AMP (Accelerated Mobile Pages) & HTMX Mode (⚡)
         </span>
       </div>
     </aside>
