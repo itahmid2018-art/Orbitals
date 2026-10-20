@@ -34,7 +34,7 @@ export const FloatingSidebar: React.FC<Props> = ({
   return (
     <aside
       aria-label="Quick Features Menu"
-      className="fixed left-2 sm:left-4 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-1.5 p-1.5 sm:p-2 rounded-2xl bg-slate-900/90 backdrop-blur-md border border-slate-700/80 shadow-2xl text-white select-none transition-all"
+      className="fixed left-2 sm:left-3.5 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-1.5 p-1.5 sm:p-2 rounded-2xl bg-slate-900/95 backdrop-blur-md border border-slate-700/80 shadow-2xl text-white select-none transition-all"
     >
       {/* Brand Icon / Home (About & Vision) */}
       <div className="relative group">

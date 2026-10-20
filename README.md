@@ -91,9 +91,22 @@ The platform opens directly into a comprehensive **About & Vision Landing Page**
 - **Normal Vibrational Modes**: Real-time sinusoidal harmonic simulations of symmetric stretching ($\nu_1$), asymmetric stretching ($\nu_3$), in-plane scissoring bends ($\nu_2$), breathing modes, and umbrella inversion (e.g., Ammonia quantum tunneling).
 - **Thermal Brownian Simulation**: Maxwell-Boltzmann thermal jitter slider ($0\text{ K}$ absolute zero to $500\text{ K}$ thermal excitation).
 - **Dipole Moment Vector**: 3D arrow scaled in Debye (D) passing through the center of charge, with atomic partial charge halos ($\delta^+ / \delta^-$).
-- **Point-and-Click Measurement Tool**:
-  - Click 2 atoms: calculates exact interatomic distance in Ångströms (Å) and picometers (pm).
-  - Click 3 atoms: calculates vertex bond angle in degrees (°).
+- **Point-and-Click 3D Geometric Measurement Tool**:
+  - **Automatic Central Vertex & Bond Angle Detection (3 Atoms)**:
+    - Click any 3 atoms in any sequence. Orbitalis applies topological bond connectivity and spatial distance analysis to identify the chemical vertex atom and outer arm atoms.
+    - Accurately computes the 3D spatial vertex bond angle $\theta = \arccos\left(\frac{\vec{v}_1 \cdot \vec{v}_2}{\|\vec{v}_1\| \|\vec{v}_2\|}\right) \times \frac{180}{\pi}$ in degrees (°).
+  - **Publication-Grade 3D In-Scene Overlays**:
+    - *3D Circular Angle Arc*: Renders a continuous 36-segment geometric arc curve in the plane of the bond angle around the vertex atom.
+    - *Translucent Angular Sector Fan*: Shaded crystallographic wedge mesh (`#10b981`) highlighting the angular opening.
+    - *3D Billboarded Text Sprite*: Floating high-contrast badge anchored at the angle bisector displaying the exact angle value (e.g. `104.5°`), atom pathway labels (`∠ H1 — O2 — H3`), and ideal geometry deviation.
+    - *Dashed Connecting Guide Lines*: Dashed high-contrast cyan/emerald lines connecting vertex to both arm nuclei.
+  - **Real-Time VSEPR Reference Benchmarks**:
+    - Automatically matches the measured angle against standard theoretical geometries (Linear $180.0^\circ$, Trigonal Planar $120.0^\circ$, Tetrahedral $109.5^\circ$, Trigonal Pyramidal $107.3^\circ$, Bent $104.5^\circ$, Octahedral $90.0^\circ$).
+    - Computes and displays the signed angular deviation $\Delta\theta$ (e.g., lone-pair repulsion compression in water).
+  - **Bond Length Caliper (2 Atoms)**:
+    - Measures exact interatomic distances in Ångströms (Å) and picometers (pm) with in-scene 3D floating distance badge and dashed guide line.
+  - **Interactive HUD & Lab Notebook Integration**:
+    - On-canvas HUD banner with 1-click angle copy to clipboard and integration into the persistent Lab Notebook.
 
 ### 8. Chemical Reaction & Mechanism Predictor
 - Input multiple reactants (e.g., `C2H4 + H2O`, `CH4 + 2O2`, `HCl + NaOH`, `C6H6 + Br2`, `CH3COOH + C2H5OH`) or load the active molecule from the 3D viewer.

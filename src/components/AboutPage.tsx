@@ -232,10 +232,11 @@ const FAQ_LIST: FAQItem[] = [
           Orbitalis includes an interactive point-and-click geometric measurement tool integrated directly into the 3D canvas:
         </p>
         <ul className="list-disc pl-4 space-y-1">
-          <li><strong>To measure Bond Distance:</strong> Click any <strong className="text-slate-800">2 atoms</strong>. Orbitalis displays their exact interatomic separation in Ångströms (Å) and picometers (pm).</li>
-          <li><strong>To measure Bond Angle:</strong> Click any <strong className="text-slate-800">3 atoms</strong>. Orbitalis calculates the vertex angle formed by the middle atom in degrees (°).</li>
+          <li><strong>To measure Bond Distance:</strong> Click any <strong className="text-slate-800">2 atoms</strong>. Orbitalis displays their exact interatomic separation in Ångströms (Å) and picometers (pm) with a dashed guide line and in-scene 3D floating distance badge.</li>
+          <li><strong>To measure Bond Angle:</strong> Click any <strong className="text-slate-800">3 atoms</strong>. Orbitalis automatically performs topological connectivity and geometric distance analysis to identify the central vertex atom, computes the 3D angle in degrees (°), and renders a glowing 3D arc, translucent angular sector wedge, and billboarded angle sprite overlay directly in the 3D viewport.</li>
+          <li><strong>VSEPR Reference Comparison:</strong> The overlay automatically compares the measured angle against standard ideal VSEPR geometries (Linear 180.0°, Trigonal Planar 120.0°, Tetrahedral 109.5°, Trigonal Pyramidal 107.3°, Bent 104.5°, Octahedral 90.0°) and displays the angular deviation $\Delta\theta$.</li>
           <li><strong>Real-Time Dynamics Tracking:</strong> If thermal Brownian motion or vibrational modes are active, distances and angles update live with atomic oscillations.</li>
-          <li><strong>Clear Measurement:</strong> Click the measurement badge or any atom again to deselect.</li>
+          <li><strong>Quick Actions & Copy:</strong> Copy calculated angles to clipboard with 1 click or snapshot them into the integrated Lab Notebook. Deselect by clicking "Clear" or tapping any atom again.</li>
         </ul>
       </div>
     ),

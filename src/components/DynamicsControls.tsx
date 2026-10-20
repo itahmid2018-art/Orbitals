@@ -173,19 +173,47 @@ export const DynamicsControls: React.FC<Props> = ({
           </ul>
 
           {measurement.atoms.length > 0 && (
-            <div className="p-2.5 rounded-lg bg-blue-50/70 border border-blue-100 space-y-1 mt-2">
-              <span className="font-semibold text-blue-900 block">Current Measurement:</span>
+            <div className="p-2.5 rounded-lg bg-blue-50/70 border border-blue-100 space-y-1 mt-2 text-xs">
+              <span className="font-semibold text-blue-900 block text-[11px]">Active Measurement:</span>
               <div className="font-mono text-slate-800 text-[11px]">
-                Selected Atoms: {measurement.atoms.map((idx) => `${atoms[idx]?.element}#${idx + 1}`).join(' → ')}
+                {measurement.atoms.length === 3 ? (
+                  <div className="space-y-1">
+                    <div className="flex items-center flex-wrap gap-1">
+                      <span>{atoms[measurement.atoms[0]]?.element}#{measurement.atoms[0] + 1}</span>
+                      <span className="text-slate-400">──</span>
+                      <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
+                        Vertex: {atoms[measurement.vertexAtom !== undefined ? measurement.vertexAtom : measurement.atoms[1]]?.element}#{(measurement.vertexAtom !== undefined ? measurement.vertexAtom : measurement.atoms[1]) + 1}
+                      </span>
+                      <span className="text-slate-400">──</span>
+                      <span>{atoms[measurement.atoms[2]]?.element}#{measurement.atoms[2] + 1}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <span>Selected Atoms: {measurement.atoms.map((idx) => `${atoms[idx]?.element}#${idx + 1}`).join(' → ')}</span>
+                )}
               </div>
-              {measurement.distance !== undefined && (
+              {measurement.distance !== undefined && measurement.atoms.length === 2 && (
                 <div className="font-mono text-xs font-bold text-blue-700">
                   Length: {measurement.distance.toFixed(3)} Å ({(measurement.distance * 100).toFixed(1)} pm)
                 </div>
               )}
               {measurement.angle !== undefined && (
-                <div className="font-mono text-xs font-bold text-emerald-700">
-                  Angle: {measurement.angle.toFixed(1)}°
+                <div className="space-y-1">
+                  <div className="font-mono text-sm font-bold text-emerald-700 flex items-center justify-between">
+                    <span>Bond Angle: {measurement.angle.toFixed(1)}°</span>
+                  </div>
+                  <div className="font-mono text-[10px] text-slate-600 flex justify-between">
+                    <span>Arm 1: {measurement.distance?.toFixed(3)} Å</span>
+                    {measurement.distance2 !== undefined && <span>Arm 2: {measurement.distance2.toFixed(3)} Å</span>}
+                  </div>
+                  {measurement.geometryName && measurement.idealAngle !== undefined && (
+                    <div className="text-[10px] text-emerald-800 bg-emerald-50 px-2 py-1 rounded border border-emerald-200 flex justify-between">
+                      <span>Ideal: {measurement.geometryName} ({measurement.idealAngle}°)</span>
+                      <span className="font-mono font-semibold">
+                        Δ {measurement.deviation && measurement.deviation >= 0 ? '+' : ''}{measurement.deviation?.toFixed(1)}°
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

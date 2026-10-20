@@ -3,12 +3,7 @@ import {
   Atom,
   Search,
   ExternalLink,
-  HelpCircle,
   Sparkles,
-  Zap,
-  BookOpen,
-  Table,
-  Info,
 } from 'lucide-react';
 import { ChemicalProperties } from '../types/chemistry';
 
@@ -16,11 +11,11 @@ interface Props {
   properties: ChemicalProperties | null;
   onSearch: (query: string) => void;
   isLoading: boolean;
-  onOpenVseprGuide: () => void;
-  onOpenReactionPredictor: () => void;
-  onOpenTutorials: () => void;
-  onOpenPeriodicTable: () => void;
-  onOpenAbout: () => void;
+  onOpenVseprGuide?: () => void;
+  onOpenReactionPredictor?: () => void;
+  onOpenTutorials?: () => void;
+  onOpenPeriodicTable?: () => void;
+  onOpenAbout?: () => void;
 }
 
 const QUICK_EXAMPLES = [
@@ -41,11 +36,6 @@ export const Header: React.FC<Props> = ({
   properties,
   onSearch,
   isLoading,
-  onOpenVseprGuide,
-  onOpenReactionPredictor,
-  onOpenTutorials,
-  onOpenPeriodicTable,
-  onOpenAbout,
 }) => {
   const [inputVal, setInputVal] = useState('');
 
@@ -78,90 +68,25 @@ export const Header: React.FC<Props> = ({
             </div>
           </div>
 
-          {/* Search Bar & Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2">
-            <form onSubmit={handleSubmit} className="relative w-full sm:w-60 md:w-64">
+          {/* Minimal Search Box Only */}
+          <div className="flex items-center w-full sm:w-auto">
+            <form onSubmit={handleSubmit} className="relative w-full sm:w-72 md:w-80">
               <input
                 type="text"
                 value={inputVal}
                 onChange={(e) => setInputVal(e.target.value)}
                 placeholder="Formula (SF6, C6H6, Aspirin)..."
-                className="w-full pl-8 pr-16 py-1.5 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-50 placeholder-slate-400 text-slate-800 transition-all font-mono"
+                className="w-full pl-8 pr-18 py-2 text-xs rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-slate-50 placeholder-slate-400 text-slate-800 transition-all font-mono shadow-2xs"
               />
-              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-3" />
               <button
                 type="submit"
                 disabled={isLoading}
-                className="absolute right-1 top-1 px-2 py-1 text-[11px] font-medium rounded-md bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50"
+                className="absolute right-1.5 top-1.5 px-3 py-1 text-[11px] font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors disabled:opacity-50 cursor-pointer shadow-xs active:scale-95"
               >
                 {isLoading ? '...' : 'Render'}
               </button>
             </form>
-
-            {/* Periodic Table Independent Page Trigger */}
-            <button
-              onClick={onOpenPeriodicTable}
-              title="Open full interactive Periodic Table of Elements (All 118 IUPAC [International Union of Pure and Applied Chemistry] Elements)"
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 transition-colors shadow-2xs active:scale-95"
-            >
-              <Table className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-              <span className="hidden md:inline">Periodic Table (IUPAC [International Union of Pure and Applied Chemistry])</span>
-              <span className="hidden xs:inline md:hidden">Periodic Table (IUPAC)</span>
-              <span className="xs:hidden">Table</span>
-            </button>
-
-            {/* Reaction Predictor Trigger */}
-            <button
-              onClick={onOpenReactionPredictor}
-              title="Predict chemical reactions, curved-arrow mechanisms & thermodynamic profiles"
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 transition-colors shadow-2xs active:scale-95"
-            >
-              <Zap className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
-              <span className="hidden xs:inline sm:inline">Reactions</span>
-              <span className="xs:hidden">React</span>
-            </button>
-
-            {/* Tutorials & Library Trigger */}
-            <button
-              onClick={onOpenTutorials}
-              title="Guided Step-by-Step Chemistry Tutorials & Curated Molecule Library"
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 transition-colors shadow-2xs active:scale-95"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-              <span>Tutorials</span>
-            </button>
-
-            {/* VSEPR Guide Trigger */}
-            <button
-              onClick={onOpenVseprGuide}
-              title="VSEPR (Valence Shell Electron Pair Repulsion) Theory & Lewis Structure Solver"
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-300 hover:bg-slate-50 text-slate-700 transition-colors active:scale-95 cursor-pointer"
-            >
-              <HelpCircle className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-              <span className="hidden md:inline">VSEPR (Valence Shell Electron Pair Repulsion)</span>
-              <span className="md:hidden">VSEPR (Theory)</span>
-            </button>
-
-            {/* About Page Trigger */}
-            <button
-              onClick={onOpenAbout}
-              title="About Orbitalis (Ideas, Vision, Mission, FAQ & Roadmap)"
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 transition-colors shadow-2xs active:scale-95 cursor-pointer"
-            >
-              <Info className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-              <span>About & FAQ</span>
-            </button>
-
-            {/* Fast AMP & HTMX Mode Link */}
-            <a
-              href="/amp.html"
-              title="Ultra-fast AMP (Accelerated Mobile Pages) & HTMX (Hypertext Markup Extensions) Edition"
-              className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition-colors shadow-2xs active:scale-95"
-            >
-              <span className="text-amber-600 font-bold">⚡</span>
-              <span className="hidden sm:inline">AMP & HTMX</span>
-              <span className="sm:hidden">AMP</span>
-            </a>
           </div>
         </div>
 

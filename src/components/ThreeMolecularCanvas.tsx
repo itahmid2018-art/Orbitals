@@ -36,6 +36,9 @@ import {
   Eye,
   Sliders,
   Focus,
+  Copy,
+  Check,
+  Compass,
 } from 'lucide-react';
 
 interface Props {
@@ -93,6 +96,162 @@ function createElementTextSprite(symbol: string, color: string, isSelected: bool
   return sprite;
 }
 
+// Helper to generate 3D billboarded text sprite for calculated bond angle overlay
+function createAngleLabelSprite(
+  angleDeg: number,
+  atomsStr: string,
+  idealComparison?: string
+): THREE.Sprite {
+  const canvas = document.createElement('canvas');
+  canvas.width = 400;
+  canvas.height = 150;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.clearRect(0, 0, 400, 150);
+
+    const r = 22;
+    const x = 10;
+    const y = 8;
+    const w = 380;
+    const h = 134;
+
+    // Glowing drop shadow
+    ctx.shadowColor = 'rgba(16, 185, 129, 0.55)';
+    ctx.shadowBlur = 16;
+    ctx.shadowOffsetY = 4;
+
+    // Rounded rectangle path
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+    ctx.fill();
+
+    // Vibrant emerald border
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = '#10b981';
+    ctx.stroke();
+
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+
+    // Top Header / Atom Pathway: "∠ H1 — O2 — H3"
+    ctx.fillStyle = '#6ee7b7';
+    ctx.font = 'bold 22px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(atomsStr, 200, 20);
+
+    // Large Bold Angle Number: "104.5°"
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 48px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${angleDeg.toFixed(1)}°`, 200, 74);
+
+    // Bottom Subtitle (Reference comparison or geometry)
+    if (idealComparison) {
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '600 17px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.fillText(idealComparison, 200, 114);
+    }
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+  });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(1.4, 0.525, 1);
+  sprite.renderOrder = 9999;
+  return sprite;
+}
+
+// Helper to generate 3D billboarded text sprite for calculated distance overlay
+function createDistanceLabelSprite(distAngstrom: number, atomsStr: string): THREE.Sprite {
+  const canvas = document.createElement('canvas');
+  canvas.width = 340;
+  canvas.height = 140;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    ctx.clearRect(0, 0, 340, 140);
+
+    const r = 20;
+    const x = 10;
+    const y = 10;
+    const w = 320;
+    const h = 120;
+
+    ctx.shadowColor = 'rgba(2, 132, 199, 0.55)';
+    ctx.shadowBlur = 16;
+    ctx.shadowOffsetY = 4;
+
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.arcTo(x + w, y, x + w, y + r, r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+    ctx.lineTo(x + r, y + h);
+    ctx.arcTo(x, y + h, x, y + h - r, r);
+    ctx.lineTo(x, y + r);
+    ctx.arcTo(x, y, x + r, y, r);
+    ctx.closePath();
+
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
+    ctx.fill();
+
+    ctx.lineWidth = 3.5;
+    ctx.strokeStyle = '#0284c7';
+    ctx.stroke();
+
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+
+    ctx.fillStyle = '#7dd3fc';
+    ctx.font = 'bold 20px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.fillText(atomsStr, 170, 20);
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 44px system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(`${distAngstrom.toFixed(3)} Å`, 170, 68);
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '600 17px ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, sans-serif';
+    ctx.fillText(`(${(distAngstrom * 100).toFixed(1)} pm)`, 170, 104);
+  }
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const mat = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    depthWrite: false,
+    depthTest: false,
+  });
+  const sprite = new THREE.Sprite(mat);
+  sprite.scale.set(1.3, 0.535, 1);
+  sprite.renderOrder = 9999;
+  return sprite;
+}
+
 export const ThreeMolecularCanvas: React.FC<Props> = ({
   atoms,
   bonds,
@@ -126,6 +285,7 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
   const [isIsolationMode, setIsIsolationMode] = useState(false);
   const [isDockCollapsed, setIsDockCollapsed] = useState(false);
   const [hoveredAtom, setHoveredAtom] = useState<Atom3D | null>(null);
+  const [copiedAngle, setCopiedAngle] = useState(false);
 
   // Three.js scene refs
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -726,7 +886,7 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
     updateCameraPosition,
   ]);
 
-  // Measurement visual line and angle arc overlays
+  // Measurement visual line, 3D angle arc, sector fan, and floating billboard overlays
   useEffect(() => {
     if (!measurementGroupRef.current) return;
     const measGroup = measurementGroupRef.current;
@@ -739,29 +899,145 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
       if (m1 && m2) {
         const p1 = m1.initialPos;
         const p2 = m2.initialPos;
+        const dist = measurement.distance ?? p1.distanceTo(p2);
+
         const lineGeom = new THREE.BufferGeometry().setFromPoints([p1, p2]);
         const lineMat = new THREE.LineDashedMaterial({
           color: 0x0284c7,
           dashSize: 0.2,
           gapSize: 0.1,
-          linewidth: 2,
+          linewidth: 2.5,
         });
         const line = new THREE.Line(lineGeom, lineMat);
         line.computeLineDistances();
         measGroup.add(line);
+
+        // In-scene 3D distance billboard sprite
+        const pMid = p1.clone().add(p2).multiplyScalar(0.5);
+        const elem1 = atoms[idx1]?.element || `#${idx1 + 1}`;
+        const elem2 = atoms[idx2]?.element || `#${idx2 + 1}`;
+        const distSprite = createDistanceLabelSprite(dist, `${elem1}#${idx1 + 1} ── ${elem2}#${idx2 + 1}`);
+        distSprite.position.copy(pMid).add(new THREE.Vector3(0, 0.28, 0));
+        measGroup.add(distSprite);
       }
     } else if (measurement.atoms.length === 3 && atomMeshesRef.current.length > 0) {
-      const [idx1, idx2, idx3] = measurement.atoms;
-      const m1 = atomMeshesRef.current.find((a) => a.id === idx1);
-      const m2 = atomMeshesRef.current.find((a) => a.id === idx2);
-      const m3 = atomMeshesRef.current.find((a) => a.id === idx3);
-      if (m1 && m2 && m3) {
-        const lineGeom = new THREE.BufferGeometry().setFromPoints([m1.initialPos, m2.initialPos, m3.initialPos]);
-        const lineMat = new THREE.LineBasicMaterial({ color: 0x059669, linewidth: 2 });
-        measGroup.add(new THREE.Line(lineGeom, lineMat));
+      const vertexIdx = measurement.vertexAtom !== undefined ? measurement.vertexAtom : measurement.atoms[1];
+      const armIndices = measurement.atoms.filter((id) => id !== vertexIdx);
+      const arm1Idx = armIndices[0] ?? measurement.atoms[0];
+      const arm2Idx = armIndices[1] ?? measurement.atoms[2];
+
+      const mV = atomMeshesRef.current.find((a) => a.id === vertexIdx);
+      const m1 = atomMeshesRef.current.find((a) => a.id === arm1Idx);
+      const m2 = atomMeshesRef.current.find((a) => a.id === arm2Idx);
+
+      if (mV && m1 && m2) {
+        const pV = mV.initialPos.clone();
+        const p1 = m1.initialPos.clone();
+        const p2 = m2.initialPos.clone();
+
+        const v1 = p1.clone().sub(pV);
+        const v2 = p2.clone().sub(pV);
+        const d1 = v1.length();
+        const d2 = v2.length();
+
+        if (d1 > 1e-4 && d2 > 1e-4) {
+          const u1 = v1.clone().divideScalar(d1);
+          const u2 = v2.clone().divideScalar(d2);
+          const cosTheta = THREE.MathUtils.clamp(u1.dot(u2), -1, 1);
+          const angleRad = Math.acos(cosTheta);
+          const angleDeg = THREE.MathUtils.radToDeg(angleRad);
+
+          // 1. Arm connecting dashed guide lines
+          const arm1Geom = new THREE.BufferGeometry().setFromPoints([p1, pV]);
+          const arm2Geom = new THREE.BufferGeometry().setFromPoints([pV, p2]);
+          const armMat = new THREE.LineDashedMaterial({
+            color: 0x10b981,
+            dashSize: 0.15,
+            gapSize: 0.08,
+            linewidth: 2.5,
+          });
+          const line1 = new THREE.Line(arm1Geom, armMat);
+          line1.computeLineDistances();
+          const line2 = new THREE.Line(arm2Geom, armMat.clone());
+          line2.computeLineDistances();
+          measGroup.add(line1);
+          measGroup.add(line2);
+
+          // 2. Normal vector & in-plane perpendicular vector
+          let normal = new THREE.Vector3().crossVectors(u1, u2);
+          if (normal.lengthSq() < 1e-6) {
+            const up = Math.abs(u1.y) < 0.9 ? new THREE.Vector3(0, 1, 0) : new THREE.Vector3(1, 0, 0);
+            normal.crossVectors(u1, up).normalize();
+          } else {
+            normal.normalize();
+          }
+          const uPerp = new THREE.Vector3().crossVectors(normal, u1).normalize();
+
+          // 3. Smooth 3D Bond Angle Arc
+          const arcRadius = Math.max(0.48, Math.min(0.95, 0.45 * Math.min(d1, d2)));
+          const segments = 36;
+          const arcPoints: THREE.Vector3[] = [];
+          for (let i = 0; i <= segments; i++) {
+            const t = i / segments;
+            const a = t * angleRad;
+            const dir = new THREE.Vector3()
+              .addScaledVector(u1, Math.cos(a))
+              .addScaledVector(uPerp, Math.sin(a));
+            arcPoints.push(pV.clone().addScaledVector(dir, arcRadius));
+          }
+
+          const arcGeom = new THREE.BufferGeometry().setFromPoints(arcPoints);
+          const arcMat = new THREE.LineBasicMaterial({ color: 0x34d399, linewidth: 3 });
+          const arcLine = new THREE.Line(arcGeom, arcMat);
+          measGroup.add(arcLine);
+
+          // 4. Translucent Angular Sector Fan
+          const fanVertices: number[] = [];
+          for (let i = 0; i < segments; i++) {
+            fanVertices.push(pV.x, pV.y, pV.z);
+            fanVertices.push(arcPoints[i].x, arcPoints[i].y, arcPoints[i].z);
+            fanVertices.push(arcPoints[i + 1].x, arcPoints[i + 1].y, arcPoints[i + 1].z);
+          }
+          const fanGeom = new THREE.BufferGeometry();
+          fanGeom.setAttribute('position', new THREE.Float32BufferAttribute(fanVertices, 3));
+          fanGeom.computeVertexNormals();
+          const fanMat = new THREE.MeshBasicMaterial({
+            color: 0x10b981,
+            transparent: true,
+            opacity: 0.22,
+            side: THREE.DoubleSide,
+            depthWrite: false,
+          });
+          const fanMesh = new THREE.Mesh(fanGeom, fanMat);
+          measGroup.add(fanMesh);
+
+          // 5. 3D In-Scene Angle Text Sprite Overlay
+          let bisectDir: THREE.Vector3;
+          if (angleDeg < 179.5 && angleDeg > 0.5) {
+            bisectDir = new THREE.Vector3().addVectors(u1, u2).normalize();
+          } else {
+            bisectDir = uPerp.clone();
+          }
+          const labelPos = pV.clone().addScaledVector(bisectDir, arcRadius + 0.38);
+
+          const elem1 = atoms[arm1Idx]?.element || `A#${arm1Idx + 1}`;
+          const elemV = atoms[vertexIdx]?.element || `V#${vertexIdx + 1}`;
+          const elem2 = atoms[arm2Idx]?.element || `B#${arm2Idx + 1}`;
+          const atomsTitle = `∠ ${elem1}#${arm1Idx + 1} — ${elemV}#${vertexIdx + 1} — ${elem2}#${arm2Idx + 1}`;
+
+          let idealSubtext = '';
+          if (measurement.geometryName && measurement.idealAngle !== undefined) {
+            const diff = angleDeg - measurement.idealAngle;
+            idealSubtext = `${measurement.geometryName} (${measurement.idealAngle.toFixed(1)}°) · Δ ${diff >= 0 ? '+' : ''}${diff.toFixed(1)}°`;
+          }
+
+          const labelSprite = createAngleLabelSprite(angleDeg, atomsTitle, idealSubtext);
+          labelSprite.position.copy(labelPos);
+          measGroup.add(labelSprite);
+        }
       }
     }
-  }, [measurement]);
+  }, [measurement, atoms]);
 
   // Main Animation Loop with frame-rate independent kinematics
   useEffect(() => {
@@ -866,21 +1142,64 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
     isDraggingRef.current = false;
   };
 
-  const handleWheel = (e: React.WheelEvent) => {
-    e.preventDefault();
-    const zoomDelta = e.deltaY * 0.01;
-    cameraSphericalRef.current.radius = Math.max(3, Math.min(60, cameraSphericalRef.current.radius + zoomDelta));
-    if (renderStyle === '2d_projected') {
-      cameraSphericalRef.current.theta = 0;
-      cameraSphericalRef.current.phi = Math.PI / 2;
-      if (cameraRef.current) {
-        cameraRef.current.position.set(0, 0, cameraSphericalRef.current.radius);
-        cameraRef.current.lookAt(0, 0, 0);
+  // Native non-passive Wheel & Trackpad Zoom Handler attached to container
+  // Prevents the browser from zooming the webpage or scrolling the parent document
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const onNativeWheel = (e: WheelEvent) => {
+      // Strictly prevent browser page zoom (Ctrl+wheel / trackpad pinch) and page scroll
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Normalize delta across browsers and devices
+      let delta = e.deltaY;
+      if (e.deltaMode === 1) {
+        delta *= 16;
+      } else if (e.deltaMode === 2) {
+        delta *= 100;
       }
-    } else {
-      updateCameraPosition();
-    }
-  };
+
+      // If user is pinch-zooming on trackpad (browser sets ctrlKey: true)
+      if (e.ctrlKey) {
+        delta *= 2.0;
+      }
+
+      const zoomFactor = delta * 0.01;
+      cameraSphericalRef.current.radius = Math.max(
+        2.5,
+        Math.min(65, cameraSphericalRef.current.radius + zoomFactor)
+      );
+
+      if (renderStyle === '2d_projected') {
+        cameraSphericalRef.current.theta = 0;
+        cameraSphericalRef.current.phi = Math.PI / 2;
+        if (cameraRef.current) {
+          cameraRef.current.position.set(0, 0, cameraSphericalRef.current.radius);
+          cameraRef.current.lookAt(0, 0, 0);
+        }
+      } else {
+        updateCameraPosition();
+      }
+    };
+
+    // Prevent Safari/WebKit trackpad gesture zooming on whole page
+    const onGesture = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    container.addEventListener('wheel', onNativeWheel, { passive: false });
+    container.addEventListener('gesturestart', onGesture, { passive: false });
+    container.addEventListener('gesturechange', onGesture, { passive: false });
+
+    return () => {
+      container.removeEventListener('wheel', onNativeWheel);
+      container.removeEventListener('gesturestart', onGesture);
+      container.removeEventListener('gesturechange', onGesture);
+    };
+  }, [renderStyle, updateCameraPosition]);
 
   const handleClick = (e: React.MouseEvent) => {
     if (!canvasRef.current || !cameraRef.current) return;
@@ -1132,7 +1451,7 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
   return (
     <div
       ref={containerRef}
-      className={`select-none overflow-hidden transition-all duration-200 ${
+      className={`select-none overflow-hidden overscroll-contain touch-none transition-all duration-200 ${
         isFullscreen
           ? 'fixed inset-0 z-50 w-screen h-screen rounded-none border-0 shadow-2xl'
           : 'relative w-full h-full min-h-[380px] sm:min-h-[460px] lg:min-h-[550px] rounded-2xl border border-slate-200 shadow-sm'
@@ -1147,7 +1466,6 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        onWheel={handleWheel}
         onClick={handleClick}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -1265,34 +1583,132 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
 
       {/* Measurement HUD banner */}
       {measurement.atoms.length > 0 && (
-        <div className="absolute top-14 left-3 p-2.5 rounded-xl bg-slate-900/90 border border-blue-500/50 shadow-xl text-xs z-10 flex items-center gap-3">
-          <Ruler className="w-4 h-4 text-cyan-400" />
-          <div>
+        <div className="absolute top-14 left-3 p-3 rounded-xl bg-slate-900/95 border border-emerald-500/40 shadow-2xl text-xs z-10 max-w-xs sm:max-w-sm backdrop-blur-md transition-all">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shrink-0">
+                {measurement.atoms.length === 3 ? (
+                  <Compass className="w-4 h-4 text-emerald-400" />
+                ) : (
+                  <Ruler className="w-4 h-4 text-cyan-400" />
+                )}
+              </div>
+              <div>
+                <span className="font-bold text-slate-100 text-[11px] block">
+                  {measurement.atoms.length === 3
+                    ? '3D Bond Angle Measurement'
+                    : measurement.atoms.length === 2
+                    ? 'Bond Length Measurement'
+                    : 'Measurement Tool (Step 1 of 3)'}
+                </span>
+                <span className="text-[10px] text-slate-400 block">
+                  {measurement.atoms.length === 3
+                    ? '3-atom spatial vertex angle & arc'
+                    : measurement.atoms.length === 2
+                    ? '2-atom interatomic distance'
+                    : 'Select 2nd atom for distance, 3rd for angle'}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1 shrink-0">
+              {measurement.atoms.length === 3 && measurement.angle !== undefined && (
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${measurement.angle?.toFixed(1)}°`);
+                    setCopiedAngle(true);
+                    setTimeout(() => setCopiedAngle(false), 2000);
+                  }}
+                  title="Copy calculated bond angle"
+                  className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                >
+                  {copiedAngle ? (
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              )}
+              <button
+                onClick={onClearMeasurement}
+                className="text-[10px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+              >
+                Clear
+              </button>
+            </div>
+          </div>
+
+          {/* Measurement content */}
+          <div className="mt-2 pt-2 border-t border-slate-800/80">
             {measurement.atoms.length === 1 && (
-              <span>
-                Atom 1: <strong className="text-white">{atoms[measurement.atoms[0]]?.element}#{measurement.atoms[0] + 1}</strong>. Click atom 2 to measure distance.
+              <span className="text-slate-300 text-[11px]">
+                Atom 1: <strong className="text-cyan-400 font-mono">{atoms[measurement.atoms[0]]?.element}#{measurement.atoms[0] + 1}</strong>.
+                Click a second atom to measure distance, or a third atom to measure bond angle.
               </span>
             )}
+
             {measurement.atoms.length === 2 && measurement.distance !== undefined && (
-              <div className="flex items-center gap-2">
-                <span>Distance:</span>
-                <span className="font-bold font-mono text-cyan-400">{measurement.distance.toFixed(3)} Å</span>
-                <span className="text-slate-400 text-[10px]">({(measurement.distance * 100).toFixed(1)} pm)</span>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between font-mono">
+                  <span className="text-slate-300 text-[11px]">
+                    {atoms[measurement.atoms[0]]?.element}#{measurement.atoms[0] + 1} ── {atoms[measurement.atoms[1]]?.element}#{measurement.atoms[1] + 1}
+                  </span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-bold text-cyan-400 text-sm">{measurement.distance.toFixed(3)} Å</span>
+                    <span className="text-slate-400 text-[10px]">({(measurement.distance * 100).toFixed(1)} pm)</span>
+                  </div>
+                </div>
+                <div className="text-[10px] text-slate-400 italic">
+                  Tip: Click a 3rd atom to measure the 3D bond angle formed between them.
+                </div>
               </div>
             )}
+
             {measurement.atoms.length === 3 && measurement.angle !== undefined && (
-              <div className="flex items-center gap-2">
-                <span>Bond Angle:</span>
-                <span className="font-bold font-mono text-emerald-400">{measurement.angle.toFixed(1)}°</span>
+              <div className="space-y-1.5">
+                <div className="flex items-baseline justify-between gap-2">
+                  <div className="font-mono text-[11px] text-slate-300 flex items-center flex-wrap gap-1">
+                    <span>
+                      {atoms[measurement.atoms[0]]?.element}#{measurement.atoms[0] + 1}
+                    </span>
+                    <span className="text-slate-500">──</span>
+                    <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-bold border border-emerald-500/40">
+                      Vertex: {atoms[measurement.vertexAtom !== undefined ? measurement.vertexAtom : measurement.atoms[1]]?.element}#{(measurement.vertexAtom !== undefined ? measurement.vertexAtom : measurement.atoms[1]) + 1}
+                    </span>
+                    <span className="text-slate-500">──</span>
+                    <span>
+                      {atoms[measurement.atoms[2]]?.element}#{measurement.atoms[2] + 1}
+                    </span>
+                  </div>
+                  <div className="font-black font-mono text-emerald-400 text-base shrink-0">
+                    {measurement.angle.toFixed(1)}°
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-[10px] text-slate-400 font-mono">
+                  <span>
+                    Arm 1: {measurement.distance?.toFixed(3)} Å
+                  </span>
+                  {measurement.distance2 !== undefined && (
+                    <span>
+                      Arm 2: {measurement.distance2.toFixed(3)} Å
+                    </span>
+                  )}
+                </div>
+
+                {measurement.geometryName && measurement.idealAngle !== undefined && (
+                  <div className="p-1.5 rounded-lg bg-emerald-950/40 border border-emerald-500/20 flex items-center justify-between text-[10px]">
+                    <span className="text-slate-300">
+                      Reference: <strong className="text-emerald-300">{measurement.geometryName}</strong> ({measurement.idealAngle.toFixed(1)}°)
+                    </span>
+                    <span className="font-mono text-emerald-400 font-semibold">
+                      Δ {measurement.deviation && measurement.deviation >= 0 ? '+' : ''}{measurement.deviation?.toFixed(1)}°
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
-          <button
-            onClick={onClearMeasurement}
-            className="text-[10px] px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors ml-1"
-          >
-            Clear
-          </button>
         </div>
       )}
 
@@ -1300,7 +1716,7 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
       {renderStyle === 'esp_surface' && (
         <div
           className={`absolute left-3 p-3 rounded-xl bg-slate-900/95 border border-slate-700/80 shadow-2xl text-xs z-10 w-72 backdrop-blur-sm transition-all ${
-            measurement.atoms.length > 0 ? 'top-28' : 'top-14'
+            measurement.atoms.length === 3 ? 'top-48 sm:top-44' : measurement.atoms.length > 0 ? 'top-32' : 'top-14'
           }`}
         >
           <div className="flex items-center justify-between mb-1.5">

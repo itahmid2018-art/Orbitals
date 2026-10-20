@@ -102,6 +102,11 @@ export type OrbitalVisualizationMode =
 
 export interface MeasurementSelection {
   atoms: number[]; // indices of clicked atoms
-  distance?: number; // Angstroms (if 2 atoms)
+  distance?: number; // Angstroms (if 2 atoms, or arm 1 distance if 3 atoms)
+  distance2?: number; // Angstroms (arm 2 distance if 3 atoms)
   angle?: number; // degrees (if 3 atoms)
+  vertexAtom?: number; // central vertex atom index for bond angle
+  idealAngle?: number; // Ideal standard VSEPR benchmark angle (e.g. 109.5, 104.5, 120, 180)
+  geometryName?: string; // Geometry name (e.g. "Bent", "Tetrahedral", "Trigonal Planar", "Linear")
+  deviation?: number; // Angular difference from ideal angle (angle - idealAngle)
 }

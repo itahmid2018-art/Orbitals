@@ -14,6 +14,7 @@ This document provides a complete phase-wise review of the **Orbitalis** 3D Mole
 | **2** | **Viewport-Specific Favicon Suite & Mobile/Tablet Optimization**<br>Favicons for respective viewports and optimized mobile & tablet UX. | **COMPLETED** | - `/public`: Deployed full favicon suite including `favicon.svg` (vector desktop), `favicon-16x16.png`, `favicon-32x32.png` (browser tabs), `favicon.ico` (legacy fallback), `apple-touch-icon.png` (iOS Safari / iPad), and `pwa-192x192.png`, `pwa-512x512.png`, `pwa-maskable-512x512.png` (Android/PWA).<br>- `index.html`: `viewport-fit=cover`, mobile web app meta tags, light/dark theme colors.<br>- `ThreeMolecularCanvas.tsx`: Dual-touch orbit drag and pinch-to-zoom gestures, touch-friendly hit areas.<br>- `App.tsx`: Sticky quick-anchor navigation on mobile screens (`🔬 3D Canvas` / `📊 Inspector & Notebook`).<br>- `PeriodicTablePage.tsx`: Horizontal scroll indicators, swipe guidance banners, and touch-optimized element cells. |
 | **3** | **Full-Screen Toggle Button for 3D Molecular Canvas**<br>Enhance focus on the 3D visualization. | **COMPLETED** | - `src/components/ThreeMolecularCanvas.tsx`: Top-right quick-action toolbar button with toggle between `Maximize2` and `Minimize2`.<br>- Browser fullscreen API integration (`requestFullscreen`, `exitFullscreen`) synchronized with `fullscreenchange` and `webkitfullscreenchange` event listeners.<br>- Fallback full-window overlay (`fixed inset-0 z-50 w-screen h-screen`) for restricted iframe sandboxes.<br>- Keyboard `Escape` key listener.<br>- Top-left "Focus Mode (Esc to exit)" indicator badge.<br>- Dynamic aspect ratio updates and delayed resize timer to eliminate canvas distortion upon toggle. |
 | **4** | **Error Recovery & Continuation**<br>Resume and verify ongoing execution. | **COMPLETED** | Clean build and lint check verified; codebase in pristine working condition. |
+| **5** | **Bond Angle 3D Measurement Overlay**<br>Extend the measurement tool to automatically calculate and display the bond angle between three selected atoms as an overlay in the 3D viewer. | **COMPLETED** | - `src/App.tsx`: Enhanced `handleSelectAtom` with 2-tier vertex detection (topological connectivity via `bonds` and geometric maximum-span fallback), calculating true 3D spatial vertex angles, arm lengths $d_1, d_2$, and matching closest ideal VSEPR benchmark angles (Linear, Trigonal Planar, Tetrahedral, Bent, etc.).<br>- `src/components/ThreeMolecularCanvas.tsx`: Built in-scene 3D circular arc geometry, translucent angular sector fan (`#10b981`), dashed arm guide lines, and billboarded 3D angle text sprite overlay (`createAngleLabelSprite`).<br>- Updated Measurement HUD banner with vertex badge, arm distances, VSEPR reference, and 1-click clipboard copy.<br>- `src/components/DynamicsControls.tsx`: Enhanced active measurement panel.<br>- Updated `README.md`, `PROJECT_PHASES.md`, and `AboutPage.tsx`. |
 
 ---
 
@@ -62,8 +63,11 @@ This document provides a complete phase-wise review of the **Orbitalis** 3D Mole
   - Temperature slider (0 K to 800 K) scaling thermal atomic displacement amplitudes.
   - Molecular dipole moment 3D vector arrow ($D$).
 - **Interactive Precision Measurement Tool**:
-  - 2-atom distance caliper ($\text{Å}$).
-  - 3-atom bond angle arc caliper ($^\circ$).
+  - 2-atom distance caliper ($\text{Å}$ and $\text{pm}$) with 3D in-scene billboarded distance sprite and dashed guide line.
+  - 3-atom automatic central vertex detection (topological connectivity + spatial span fallback).
+  - 3D in-scene bond angle circular arc, translucent angular sector fan (`#10b981`), dashed arm guide lines, and billboarded angle text badge.
+  - Real-time VSEPR theoretical geometry reference comparison and signed deviation readout ($\Delta\theta$).
+  - On-canvas HUD banner with 1-click clipboard copy and Lab Notebook snapshot persistence.
 
 ---
 

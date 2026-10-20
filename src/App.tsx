@@ -164,7 +164,7 @@ export default function App() {
       const molecule = params.get('molecule');
       const element = params.get('element');
 
-      if (view === 'workbench') {
+      if (view === 'workbench' || view === 'molecules' || view === 'molecule') {
         setCurrentPage('workbench');
       } else if (view === 'elements' || view === 'periodic-table') {
         setCurrentPage('periodic-table');
@@ -238,25 +238,111 @@ export default function App() {
       }
 
       if (nextAtoms.length === 3) {
-        const a1 = atoms[nextAtoms[0]];
-        const a2 = atoms[nextAtoms[1]];
-        const a3 = atoms[nextAtoms[2]];
+        let vertexIdx = nextAtoms[1];
+        let arm1Idx = nextAtoms[0];
+        let arm2Idx = nextAtoms[2];
+        let foundTopological = false;
 
-        const v1 = { x: a1.x - a2.x, y: a1.y - a2.y, z: a1.z - a2.z };
-        const v2 = { x: a3.x - a2.x, y: a3.y - a2.y, z: a3.z - a2.z };
+        // 1. Automatic topological bond detection for the central vertex:
+        // If one of the 3 atoms is bonded to both others, it is definitively the true chemical vertex
+        for (const candidate of nextAtoms) {
+          const others = nextAtoms.filter((id) => id !== candidate);
+          const isConnectedToBoth =
+            bonds.some(
+              (b) =>
+                (b.sourceIndex === candidate && b.targetIndex === others[0]) ||
+                (b.targetIndex === candidate && b.sourceIndex === others[0])
+            ) &&
+            bonds.some(
+              (b) =>
+                (b.sourceIndex === candidate && b.targetIndex === others[1]) ||
+                (b.targetIndex === candidate && b.sourceIndex === others[1])
+            );
 
-        const dot = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
-        const mag1 = Math.hypot(v1.x, v1.y, v1.z);
-        const mag2 = Math.hypot(v2.x, v2.y, v2.z);
+          if (isConnectedToBoth) {
+            vertexIdx = candidate;
+            arm1Idx = others[0];
+            arm2Idx = others[1];
+            foundTopological = true;
+            break;
+          }
+        }
 
-        if (mag1 > 0 && mag2 > 0) {
-          const cosTheta = Math.max(-1, Math.min(1, dot / (mag1 * mag2)));
-          const angleDeg = (Math.acos(cosTheta) * 180) / Math.PI;
-          return {
-            atoms: nextAtoms,
-            distance: Math.hypot(a1.x - a2.x, a1.y - a2.y, a1.z - a2.z),
-            angle: angleDeg,
-          };
+        // 2. Geometric fallback: if topological search didn't find an atom bonded to both,
+        // identify the vertex by finding the longest pairwise span (the two outer arms)
+        if (!foundTopological) {
+          const [i0, i1, i2] = nextAtoms;
+          const a0 = atoms[i0];
+          const a1 = atoms[i1];
+          const a2 = atoms[i2];
+          if (a0 && a1 && a2) {
+            const d01 = Math.hypot(a0.x - a1.x, a0.y - a1.y, a0.z - a1.z);
+            const d12 = Math.hypot(a1.x - a2.x, a1.y - a2.y, a1.z - a2.z);
+            const d02 = Math.hypot(a0.x - a2.x, a0.y - a2.y, a0.z - a2.z);
+
+            if (d02 >= d01 && d02 >= d12) {
+              vertexIdx = i1;
+              arm1Idx = i0;
+              arm2Idx = i2;
+            } else if (d01 >= d12 && d01 >= d02) {
+              vertexIdx = i2;
+              arm1Idx = i0;
+              arm2Idx = i1;
+            } else {
+              vertexIdx = i0;
+              arm1Idx = i1;
+              arm2Idx = i2;
+            }
+          }
+        }
+
+        const aVertex = atoms[vertexIdx];
+        const aArm1 = atoms[arm1Idx];
+        const aArm2 = atoms[arm2Idx];
+
+        if (aVertex && aArm1 && aArm2) {
+          const v1 = { x: aArm1.x - aVertex.x, y: aArm1.y - aVertex.y, z: aArm1.z - aVertex.z };
+          const v2 = { x: aArm2.x - aVertex.x, y: aArm2.y - aVertex.y, z: aArm2.z - aVertex.z };
+
+          const dot = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+          const mag1 = Math.hypot(v1.x, v1.y, v1.z);
+          const mag2 = Math.hypot(v2.x, v2.y, v2.z);
+
+          if (mag1 > 0 && mag2 > 0) {
+            const cosTheta = Math.max(-1, Math.min(1, dot / (mag1 * mag2)));
+            const angleDeg = (Math.acos(cosTheta) * 180) / Math.PI;
+
+            // Reference VSEPR benchmark angles
+            const IDEAL_GEOMETRIES = [
+              { name: 'Linear', angle: 180.0 },
+              { name: 'Trigonal Planar', angle: 120.0 },
+              { name: 'Tetrahedral', angle: 109.5 },
+              { name: 'Trigonal Pyramidal', angle: 107.3 },
+              { name: 'Bent (Water)', angle: 104.5 },
+              { name: 'Octahedral / 90°', angle: 90.0 },
+            ];
+
+            let closest = IDEAL_GEOMETRIES[0];
+            let minDiff = Math.abs(angleDeg - closest.angle);
+            for (const geom of IDEAL_GEOMETRIES) {
+              const diff = Math.abs(angleDeg - geom.angle);
+              if (diff < minDiff) {
+                minDiff = diff;
+                closest = geom;
+              }
+            }
+
+            return {
+              atoms: [arm1Idx, vertexIdx, arm2Idx],
+              distance: mag1,
+              distance2: mag2,
+              angle: angleDeg,
+              vertexAtom: vertexIdx,
+              idealAngle: closest.angle,
+              geometryName: closest.name,
+              deviation: angleDeg - closest.angle,
+            };
+          }
         }
       }
 
@@ -295,9 +381,10 @@ export default function App() {
         onToggle2D={handleToggle2D}
       />
 
-      {/* View 1: About & Vision Landing Page (Default Landing Content) */}
-      {currentPage === 'about' && (
-        <div className="flex-1 flex flex-col pl-0 sm:pl-12 lg:pl-0">
+      {/* Main Content Area with dedicated clearance for the Floating Left Sidebar */}
+      <div className="flex-1 flex flex-col pl-16 sm:pl-20 lg:pl-24 min-w-0 transition-all">
+        {/* View 1: About & Vision Landing Page (Default Landing Content) */}
+        {currentPage === 'about' && (
           <AboutPage
             onBackToWorkbench={() => setCurrentPage('workbench')}
             onOpenPeriodicTable={() => setCurrentPage('periodic-table')}
@@ -306,12 +393,10 @@ export default function App() {
               setCurrentPage('workbench');
             }}
           />
-        </div>
-      )}
+        )}
 
-      {/* View 2: Complete 118-Element IUPAC Periodic Table */}
-      {currentPage === 'periodic-table' && (
-        <div className="flex-1 flex flex-col pl-0 sm:pl-12 lg:pl-0">
+        {/* View 2: Complete 118-Element IUPAC Periodic Table */}
+        {currentPage === 'periodic-table' && (
           <PeriodicTablePage
             onBackToWorkbench={() => setCurrentPage('workbench')}
             onLoadMoleculeIn3D={(formula) => {
@@ -320,23 +405,22 @@ export default function App() {
             }}
             onOpenAbout={() => setCurrentPage('about')}
           />
-        </div>
-      )}
+        )}
 
-      {/* View 3: 3D Molecular Workbench (Studio PBR & Quantum Canvas) */}
-      {currentPage === 'workbench' && (
-        <div className="flex-1 flex flex-col pl-0 sm:pl-12 lg:pl-0">
-          {/* Top Header with Search, Quick Chips & Action Triggers */}
-          <Header
-            properties={properties}
-            onSearch={loadMolecule}
-            isLoading={isLoading}
-            onOpenVseprGuide={() => setIsVseprModalOpen(true)}
-            onOpenReactionPredictor={() => setIsReactionModalOpen(true)}
-            onOpenTutorials={() => setIsTutorialModalOpen(true)}
-            onOpenPeriodicTable={() => setCurrentPage('periodic-table')}
-            onOpenAbout={() => setCurrentPage('about')}
-          />
+        {/* View 3: 3D Molecular Workbench (Studio PBR & Quantum Canvas) */}
+        {currentPage === 'workbench' && (
+          <div className="flex-1 flex flex-col min-w-0">
+            {/* Top Header with Search, Quick Chips & Action Triggers */}
+            <Header
+              properties={properties}
+              onSearch={loadMolecule}
+              isLoading={isLoading}
+              onOpenVseprGuide={() => setIsVseprModalOpen(true)}
+              onOpenReactionPredictor={() => setIsReactionModalOpen(true)}
+              onOpenTutorials={() => setIsTutorialModalOpen(true)}
+              onOpenPeriodicTable={() => setCurrentPage('periodic-table')}
+              onOpenAbout={() => setCurrentPage('about')}
+            />
 
       {/* Error alert banner if any */}
       {errorMessage && (
@@ -504,6 +588,7 @@ export default function App() {
       </main>
       </div>
       )}
+      </div>
 
       {/* Interactive Modals */}
       <VSEPRSolverModal
