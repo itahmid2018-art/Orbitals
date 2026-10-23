@@ -5,6 +5,7 @@ import {
   ChemicalProperties,
   RenderStyle,
   OrbitalVisualizationMode,
+  OrbitalColorScheme,
   VibrationalMode,
   MeasurementSelection,
 } from './types/chemistry';
@@ -29,12 +30,15 @@ import { PeriodicTablePage } from './components/PeriodicTablePage';
 import { AboutPage } from './components/AboutPage';
 import { LabNotebook } from './components/LabNotebook';
 import { FloatingSidebar } from './components/FloatingSidebar';
+import { InteractiveWalkthrough } from './components/InteractiveWalkthrough';
 import {
   Sparkles,
   Layers,
   Activity,
   FileText,
   AlertCircle,
+  Compass,
+  X,
 } from 'lucide-react';
 
 export default function App() {
@@ -56,6 +60,8 @@ export default function App() {
   // Visualization settings
   const [renderStyle, setRenderStyle] = useState<RenderStyle>('ball_and_stick');
   const [orbitalMode, setOrbitalMode] = useState<OrbitalVisualizationMode>('hybrid');
+  const [orbitalColorScheme, setOrbitalColorScheme] = useState<OrbitalColorScheme>('phase');
+  const [isSnapToOrbit, setIsSnapToOrbit] = useState(false);
   const [orbitalScale, setOrbitalScale] = useState(1.0);
   const [orbitalOpacity, setOrbitalOpacity] = useState(0.6);
   const [temperatureK, setTemperatureK] = useState(298);
@@ -73,6 +79,8 @@ export default function App() {
   const [isVseprModalOpen, setIsVseprModalOpen] = useState(false);
   const [isReactionModalOpen, setIsReactionModalOpen] = useState(false);
   const [isTutorialModalOpen, setIsTutorialModalOpen] = useState(false);
+  const [isWalkthroughOpen, setIsWalkthroughOpen] = useState(false);
+  const [showWalkthroughPrompt, setShowWalkthroughPrompt] = useState(true);
 
   // Search & Resolve Molecule
   const loadMolecule = async (query: string) => {
@@ -362,6 +370,9 @@ export default function App() {
     setOrbitalMode(snapshot.orbitalMode);
     setRenderStyle(snapshot.renderStyle);
     setTemperatureK(snapshot.temperatureK);
+    if (snapshot.isSnapToOrbit !== undefined) {
+      setIsSnapToOrbit(snapshot.isSnapToOrbit);
+    }
     if (snapshot.activeVibrationalModeName) {
       const found = vibrationalModes.find((m) => m.name === snapshot.activeVibrationalModeName);
       if (found) setActiveVibrationalMode(found);
@@ -377,6 +388,7 @@ export default function App() {
         onOpenReactionPredictor={() => setIsReactionModalOpen(true)}
         onOpenVseprGuide={() => setIsVseprModalOpen(true)}
         onOpenTutorials={() => setIsTutorialModalOpen(true)}
+        onOpenWalkthrough={() => setIsWalkthroughOpen(true)}
         is2DActive={renderStyle === '2d_projected'}
         onToggle2D={handleToggle2D}
       />
@@ -392,6 +404,7 @@ export default function App() {
               loadMolecule(formula);
               setCurrentPage('workbench');
             }}
+            onOpenWalkthrough={() => setIsWalkthroughOpen(true)}
           />
         )}
 
@@ -460,27 +473,33 @@ export default function App() {
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left Pane: Studio PBR Three.js Molecular Canvas (7 cols on lg) */}
         <div id="canvas-section" className="lg:col-span-7 xl:col-span-7 flex flex-col gap-3 h-[400px] sm:h-[490px] lg:h-[740px] relative lg:sticky lg:top-24">
-          <ThreeMolecularCanvas
-            atoms={atoms}
-            bonds={bonds}
-            vsepr={properties?.vsepr}
-            activeVibrationalMode={activeVibrationalMode}
-            temperatureK={temperatureK}
-            renderStyle={renderStyle}
-            onChangeRenderStyle={setRenderStyle}
-            orbitalMode={orbitalMode}
-            onChangeOrbitalMode={setOrbitalMode}
-            orbitalScale={orbitalScale}
-            onChangeOrbitalScale={setOrbitalScale}
-            orbitalOpacity={orbitalOpacity}
-            onChangeOrbitalOpacity={setOrbitalOpacity}
-            showDipole={showDipole}
-            onToggleDipole={setShowDipole}
-            dipoleDebye={properties?.estimatedDipoleDebye || 0}
-            measurement={measurement}
-            onSelectAtom={handleSelectAtom}
-            onClearMeasurement={handleClearMeasurement}
-          />
+          <div id="canvas-container" className="relative w-full h-full">
+            <ThreeMolecularCanvas
+              atoms={atoms}
+              bonds={bonds}
+              vsepr={properties?.vsepr}
+              activeVibrationalMode={activeVibrationalMode}
+              temperatureK={temperatureK}
+              renderStyle={renderStyle}
+              onChangeRenderStyle={setRenderStyle}
+              orbitalMode={orbitalMode}
+              onChangeOrbitalMode={setOrbitalMode}
+              orbitalColorScheme={orbitalColorScheme}
+              onChangeOrbitalColorScheme={setOrbitalColorScheme}
+              isSnapToOrbit={isSnapToOrbit}
+              onChangeSnapToOrbit={setIsSnapToOrbit}
+              orbitalScale={orbitalScale}
+              onChangeOrbitalScale={setOrbitalScale}
+              orbitalOpacity={orbitalOpacity}
+              onChangeOrbitalOpacity={setOrbitalOpacity}
+              showDipole={showDipole}
+              onToggleDipole={setShowDipole}
+              dipoleDebye={properties?.estimatedDipoleDebye || 0}
+              measurement={measurement}
+              onSelectAtom={handleSelectAtom}
+              onClearMeasurement={handleClearMeasurement}
+            />
+          </div>
 
           {/* Quick status bar beneath canvas */}
           <div className="flex flex-wrap items-center justify-between text-xs text-slate-500 px-1 gap-1">
@@ -509,10 +528,11 @@ export default function App() {
             activeVibrationalMode={activeVibrationalMode}
             measurement={measurement}
             onRestoreSnapshot={handleRestoreSnapshot}
+            isSnapToOrbit={isSnapToOrbit}
           />
 
           {/* Navigation Tabs */}
-          <div className="flex rounded-xl bg-slate-200/80 p-1 text-xs font-semibold border border-slate-200 shadow-2xs">
+          <div id="property-inspector-tabs" className="flex rounded-xl bg-slate-200/80 p-1 text-xs font-semibold border border-slate-200 shadow-2xs">
             <button
               onClick={() => setActiveTab('properties')}
               className={`flex-1 py-2 rounded-lg flex items-center justify-center gap-1.5 transition-all ${
@@ -561,6 +581,10 @@ export default function App() {
               onChangeRenderStyle={setRenderStyle}
               orbitalMode={orbitalMode}
               onChangeOrbitalMode={setOrbitalMode}
+              orbitalColorScheme={orbitalColorScheme}
+              onChangeOrbitalColorScheme={setOrbitalColorScheme}
+              isSnapToOrbit={isSnapToOrbit}
+              onToggleSnapToOrbit={() => setIsSnapToOrbit((prev) => !prev)}
               orbitalScale={orbitalScale}
               onChangeOrbitalScale={setOrbitalScale}
               orbitalOpacity={orbitalOpacity}
@@ -615,6 +639,78 @@ export default function App() {
           loadMolecule(formula);
           setCurrentPage('workbench');
         }}
+      />
+
+      {/* Welcome Guided Walkthrough Invitation on Landing Page */}
+      {currentPage === 'about' && !isWalkthroughOpen && showWalkthroughPrompt && (
+        <aside
+          aria-label="Interactive Walkthrough Invitation"
+          className="fixed bottom-5 right-5 z-40 max-w-sm w-[calc(100vw-2.5rem)] rounded-2xl bg-slate-900/95 backdrop-blur-md border border-cyan-500/40 p-4 shadow-2xl text-slate-100 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-4 duration-300"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center text-white shadow-md shadow-cyan-500/30">
+                <Compass className="w-4 h-4 animate-[spin_8s_linear_infinite]" />
+              </div>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 block font-mono">
+                  Interactive Demo
+                </span>
+                <h4 className="text-xs font-bold text-white">New to Orbitalis?</h4>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowWalkthroughPrompt(false)}
+              className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
+              title="Dismiss"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <p className="text-[11px] text-slate-300 leading-relaxed">
+            Take a 60-second interactive guided walkthrough through 3D molecular structures, quantum orbitals, Snap-to-Orbit mathematical symmetry axes, and precision bond calipers!
+          </p>
+
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              onClick={() => {
+                setShowWalkthroughPrompt(false);
+                setIsWalkthroughOpen(true);
+              }}
+              className="flex-1 py-1.5 px-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold text-xs transition-all flex items-center justify-center gap-1.5 shadow-md shadow-cyan-500/20 active:scale-95 cursor-pointer"
+            >
+              <Compass className="w-3.5 h-3.5 text-slate-950" />
+              <span>Start Walkthrough</span>
+            </button>
+            <button
+              onClick={() => setShowWalkthroughPrompt(false)}
+              className="py-1.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors cursor-pointer"
+            >
+              Explore First
+            </button>
+          </div>
+        </aside>
+      )}
+
+      {/* Interactive Guided Website Walkthrough */}
+      <InteractiveWalkthrough
+        isOpen={isWalkthroughOpen}
+        onClose={() => setIsWalkthroughOpen(false)}
+        currentPage={currentPage}
+        onNavigate={(page: 'workbench' | 'periodic-table' | 'about') => setCurrentPage(page)}
+        onLoadMolecule={(formula) => {
+          loadMolecule(formula);
+          if (currentPage !== 'workbench') setCurrentPage('workbench');
+        }}
+        onToggle2D={handleToggle2D}
+        is2DActive={renderStyle === '2d_projected'}
+        orbitalColorScheme={orbitalColorScheme}
+        onChangeOrbitalColorScheme={setOrbitalColorScheme}
+        isSnapToOrbit={isSnapToOrbit}
+        onToggleSnapToOrbit={() => setIsSnapToOrbit((prev) => !prev)}
+        onOpenReactionPredictor={() => setIsReactionModalOpen(true)}
+        onOpenPeriodicTable={() => setCurrentPage('periodic-table')}
       />
     </div>
   );

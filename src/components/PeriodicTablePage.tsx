@@ -243,37 +243,41 @@ export const PeriodicTablePage: React.FC<Props> = ({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
+              {/* Prominent Orbitalis Brand Logo */}
+              <div
+                onClick={onBackToWorkbench}
+                className="flex items-center gap-3 cursor-pointer group select-none"
+                title="Orbitalis Workbench"
+              >
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-blue-500/25 ring-2 ring-blue-400/20 group-hover:scale-105 transition-transform shrink-0">
+                  <Atom className="w-6 h-6 animate-[spin_12s_linear_infinite]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xl font-extrabold tracking-tight text-slate-900 leading-tight">
+                      Orbitalis
+                    </span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200">
+                      Periodic Table
+                    </span>
+                  </div>
+                  <p className="text-[11px] font-medium text-slate-500 leading-none mt-0.5 hidden sm:block">
+                    3D Molecular & Quantum Dynamics Workbench
+                  </p>
+                </div>
+              </div>
+
+              <div className="h-6 w-px bg-slate-200 hidden sm:block mx-1" />
+
+              {/* 3D Workbench Action Button */}
               <button
                 onClick={onBackToWorkbench}
-                className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-2xs cursor-pointer"
+                className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-2xs cursor-pointer"
                 title="Return to 3D Molecular Workbench"
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span>3D Workbench</span>
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">3D Workbench</span>
               </button>
-              {onOpenAbout && (
-                <button
-                  onClick={onOpenAbout}
-                  className="p-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-2xs cursor-pointer"
-                  title="About Orbitalis (Ideas, Vision, Mission, Ambitions)"
-                >
-                  <Info className="w-4 h-4 text-blue-600" />
-                  <span className="hidden sm:inline">About</span>
-                </button>
-              )}
-              <div>
-                <div className="flex items-center gap-2">
-                  <h1 className="text-lg font-bold tracking-tight text-slate-900">
-                    Periodic Table of Elements
-                  </h1>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                    All 118 Elements (Complete IUPAC [International Union of Pure and Applied Chemistry])
-                  </span>
-                </div>
-                <p className="text-xs text-slate-500">
-                  Interactive chemical properties, electron configurations, and quantum periodic trends
-                </p>
-              </div>
             </div>
 
             {/* Search & Heatmap Controls */}
@@ -660,6 +664,68 @@ export const PeriodicTablePage: React.FC<Props> = ({
           </div>
         )}
       </main>
+
+      {/* Dedicated Periodic Table Footer */}
+      <footer id="periodic-table-footer" className="border-t border-slate-200 bg-white py-8 mt-12 text-slate-600">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          {/* Left: Prominent Orbitalis Branding & IUPAC Description */}
+          <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-3.5">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-blue-500/25 ring-2 ring-blue-400/20 shrink-0">
+              <Atom className="w-6 h-6 animate-[spin_12s_linear_infinite]" />
+            </div>
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                <span className="text-base font-extrabold tracking-tight text-slate-900">
+                  Orbitalis
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                  All 118 Elements (Complete IUPAC [International Union of Pure and Applied Chemistry])
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed max-w-xl">
+                Interactive chemical properties, electron configurations, and quantum periodic trends
+              </p>
+            </div>
+          </div>
+
+          {/* Right: Actions including About Button & Navigation Links */}
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {onOpenAbout && (
+              <button
+                onClick={onOpenAbout}
+                className="px-4 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 transition-colors flex items-center gap-2 text-xs font-semibold shadow-2xs cursor-pointer"
+                title="About Orbitalis (Ideas, Vision, Mission, Ambitions)"
+              >
+                <Info className="w-4 h-4 text-blue-600" />
+                <span>About Orbitalis</span>
+              </button>
+            )}
+            <button
+              onClick={onBackToWorkbench}
+              className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white transition-colors flex items-center gap-2 text-xs font-semibold shadow-2xs cursor-pointer"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>3D Workbench</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Secondary Sub-Footer */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6 mt-6 border-t border-slate-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] text-slate-400">
+          <p>© {new Date().getFullYear()} Orbitalis. Standardized IUPAC chemical data & VSEPR geometry modeling.</p>
+          <div className="flex items-center gap-3">
+            {onOpenAbout && (
+              <button onClick={onOpenAbout} className="hover:text-blue-600 transition-colors cursor-pointer">
+                About & Mission
+              </button>
+            )}
+            <span>•</span>
+            <a href="/amp.html" className="hover:text-blue-600 transition-colors">AMP Edition</a>
+            <span>•</span>
+            <a href="/llms.txt" className="hover:text-blue-600 transition-colors">AI Context (llms.txt)</a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };

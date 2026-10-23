@@ -100,6 +100,9 @@ export type OrbitalVisualizationMode =
   | 'lone_pairs' 
   | 'all';
 
+export type OrbitalColorScheme = 'phase' | 'quantum_numbers';
+
+
 export interface MeasurementSelection {
   atoms: number[]; // indices of clicked atoms
   distance?: number; // Angstroms (if 2 atoms, or arm 1 distance if 3 atoms)

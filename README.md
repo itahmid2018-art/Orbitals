@@ -80,14 +80,41 @@ The platform opens directly into a comprehensive **About & Vision Landing Page**
   - Calculated mass percentage (% w/w) for every constituent element.
   - Proportional multi-segment color progress bar matching IUPAC CPK element colors.
 
-### 6. Complex Orbital Arrangements & Electron Clouds
-- **Hybrid Orbitals ($sp, sp^2, sp^3, sp^3d, sp^3d^2$)**: Procedurally generated asymmetric teardrop lobes with wave-function phase coloring (positive phase in cyan, negative counter-lobe in coral).
+### 6. Complex Orbital Arrangements & Quantum Numbers (n, l, m) Color-Coding
+- **Dual Orbital Color-Coding Schemes**:
+  - **🎨 Wavefunction Phase Mode ($\Psi$)**: Visualizes quantum mechanical parity (+Ψ in Cyan vs -Ψ in Amber/Coral), illustrating constructive bonding vs destructive anti-bonding wave interference.
+  - **⚡ Quantum Energy Level Mode ($n, l, m$)**: Colors orbitals dynamically based on their subshell energy levels according to the Aufbau principle:
+    - Ground/Valence $s$ spheres ($l=0$, e.g. $1s/2s$): Emerald green (`#10b981`).
+    - $p$ Subshells ($l=1$, e.g. $2p$): Partitioned by magnetic quantum number $m$, with axial $p_z$ ($m=0$) in Royal Blue (`#2563eb`) and in-plane $p_x/p_y$ ($m=\pm 1$) in Violet/Amber.
+    - Directional Hybrids ($sp, sp^2, sp^3, sp^3d, sp^3d^2$): Ascending energy color progression from Electric Cyan ($sp$) to Cobalt ($sp^2$), Indigo ($sp^3$), Purple ($sp^3d$), and Deep Violet ($sp^3d^2$).
+    - Non-Bonding Lone Pairs ($n_b$): Warm Amber-Orange (`#f97316`) representing localized unshared valence pairs.
+    - Frontier $\pi$ Delocalized Clouds: Vibrant Magenta (`#d946ef`) for conjugated aromatic and alkene systems.
+- **📐 'Snap-to-Orbit' Standardized Mathematical Axes Alignment**:
+  - Aligns orbital lobes (hybrid $sp, sp^2, sp^3, sp^3d, sp^3d^2$, atomic $p_x, p_y, p_z$, and lone pairs) to standardized canonical symmetry axes.
+  - Canonical frames: Tetrahedral ($T_d$, $109.47^\circ$), Trigonal Planar ($D_{3h}$, $120.0^\circ$), Linear ($D_{\infty h}$, $180.0^\circ$), and Octahedral ($O_h$, $90.0^\circ$).
+  - In-scene 3D dashed symmetry guide rays and vertex target markers with on-canvas HUD indicator (`#snap-to-orbit-hud`) and bottom dock quick button (`#snap-to-orbit-dock-toggle`).
+  - Eliminates thermal vibrations and lone-pair repulsion bending to facilitate direct comparative geometric symmetry analysis across molecules.
+- **On-Canvas Quantum Energy Legend HUD**: Live floating HUD card displaying the active subshell energy hierarchy and Aufbau assignment.
+- **Hybrid Orbitals ($sp, sp^2, sp^3, sp^3d, sp^3d^2$)**: Procedurally generated asymmetric teardrop lobes with real-time parametric scaling and transparency.
 - **Atomic Orbitals**: Dumbbell $p_x, p_y, p_z$ lobes and $d_{z^2}$ lobes with toroidal donut rings.
 - **Delocalized $\pi$ Electron Clouds**: Doughnut-shaped continuous electron density clouds above and below conjugated aromatic rings (e.g. Benzene $6\pi$ ring) and alkenes.
 - **Non-Bonding Lone Pairs**: Localized electron density lobes (e.g., Water's "rabbit ears").
 - Adjustable iso-surface scale and opacity sliders.
 
-### 7. Atomic Bonding Dynamics & Measurement Tools
+### 7. Interactive Guided Website Walkthrough
+- **Dynamic On-Screen Interactive Tutorial**: Step-by-step guided interactive demo directly on the application viewport to simplify navigation, eliminate the learning curve, and guide users to the "aha!" moment.
+- **SVG Cutout Aperture Mask & Dark Dimming**: Smooth circular/rounded rectangular spotlight (`box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.78)`) highlighting targeted elements with pulsing ripple rings.
+- **Contextual Help & Interactive Action Triggers**:
+  - *Step 1: Universal Chemical Search Box*: Try searching benchmark compounds (e.g., Water $H_2O$, Benzene $C_6H_6$, Caffeine).
+  - *Step 2: 3D Studio PBR Molecular Canvas*: Rotate, pan, and zoom gestures with wheel isolation.
+  - *Step 3: Quantum Energy Level Color-Coding*: 1-click toggle to test the $(n, l, m)$ Aufbau color progression.
+  - *Step 4: 3D Bond Angle Caliper & Distance Tool*: Measure interatomic angles with automatic vertex detection.
+  - *Step 5: 2D Planar ChemView*: Switch between 3D space and textbook-grade planar orthographic projections.
+  - *Step 6: Left Floating Sidebar Navigation*: Quick access to Periodic Table, Reaction Predictor, and VSEPR solver without page clutter.
+  - *Step 7: Collapsible Scientific Lab Notebook*: Save 3D state snapshots and export findings to Markdown.
+- **Full Keyboard & Navigation Controls**: Arrow keys (←/→) to step through, `Escape` to close, indicator step dots, and launchable anytime via the floating sidebar Compass icon or About page hero.
+
+### 8. Atomic Bonding Dynamics & Measurement Tools
 - **Normal Vibrational Modes**: Real-time sinusoidal harmonic simulations of symmetric stretching ($\nu_1$), asymmetric stretching ($\nu_3$), in-plane scissoring bends ($\nu_2$), breathing modes, and umbrella inversion (e.g., Ammonia quantum tunneling).
 - **Thermal Brownian Simulation**: Maxwell-Boltzmann thermal jitter slider ($0\text{ K}$ absolute zero to $500\text{ K}$ thermal excitation).
 - **Dipole Moment Vector**: 3D arrow scaled in Debye (D) passing through the center of charge, with atomic partial charge halos ($\delta^+ / \delta^-$).

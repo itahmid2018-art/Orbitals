@@ -36,6 +36,7 @@ export const Header: React.FC<Props> = ({
   properties,
   onSearch,
   isLoading,
+  onOpenAbout,
 }) => {
   const [inputVal, setInputVal] = useState('');
 
@@ -50,26 +51,30 @@ export const Header: React.FC<Props> = ({
     <header className="border-b border-slate-200 bg-white sticky top-0 z-30 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
-          {/* Logo & Branding */}
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-sm shadow-blue-500/20">
+          {/* Prominent Logo & Branding */}
+          <div
+            onClick={onOpenAbout}
+            className={`flex items-center gap-3 select-none ${onOpenAbout ? 'cursor-pointer group' : ''}`}
+            title={onOpenAbout ? 'About Orbitalis & Mission' : 'Orbitalis 3D Quantum Workbench'}
+          >
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-blue-500/25 ring-2 ring-blue-400/20 group-hover:scale-105 transition-transform shrink-0">
               <Atom className="w-6 h-6 animate-[spin_12s_linear_infinite]" />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-lg font-bold tracking-tight text-slate-900">Orbitalis</h1>
-                <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                <h1 className="text-xl font-extrabold tracking-tight text-slate-900 leading-tight">Orbitalis</h1>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                   3D Quantum Workbench
                 </span>
               </div>
-              <p className="text-xs text-slate-500">
+              <p className="text-[11px] font-medium text-slate-500 leading-none mt-0.5 hidden sm:block">
                 Molecular viewer, orbital wavefunctions, reactions & atomic bonding dynamics
               </p>
             </div>
           </div>
 
           {/* Minimal Search Box Only */}
-          <div className="flex items-center w-full sm:w-auto">
+          <div id="header-search-container" className="flex items-center w-full sm:w-auto">
             <form onSubmit={handleSubmit} className="relative w-full sm:w-72 md:w-80">
               <input
                 type="text"

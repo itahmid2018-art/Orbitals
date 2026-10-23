@@ -9,6 +9,7 @@ import {
   VibrationalMode,
   MeasurementSelection,
   MolecularGeometry,
+  OrbitalColorScheme,
 } from '../types/chemistry';
 import { getElement } from '../services/elementData';
 import {
@@ -16,6 +17,9 @@ import {
   createPOrbitalMesh,
   createDz2OrbitalMesh,
   createDelocalizedPiClouds,
+  getStandardizedVSEPRAxes,
+  snapVectorToStandardizedAxes,
+  createStandardizedAxesVisualizer,
 } from '../services/orbitalGeometry';
 import { createEspMolecularSurface } from '../services/espCalculator';
 import {
@@ -62,6 +66,10 @@ interface Props {
   onSelectAtom: (atomIndex: number) => void;
   onClearMeasurement: () => void;
   onAddCurrentAsReactant?: () => void;
+  orbitalColorScheme?: OrbitalColorScheme;
+  onChangeOrbitalColorScheme?: (scheme: OrbitalColorScheme) => void;
+  isSnapToOrbit?: boolean;
+  onChangeSnapToOrbit?: (snap: boolean) => void;
 }
 
 // Helper to generate 2D planar circular atom tokens with high-contrast chemical symbols
@@ -272,6 +280,10 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
   measurement,
   onSelectAtom,
   onClearMeasurement,
+  orbitalColorScheme,
+  onChangeOrbitalColorScheme,
+  isSnapToOrbit,
+  onChangeSnapToOrbit,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -286,6 +298,28 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
   const [isDockCollapsed, setIsDockCollapsed] = useState(false);
   const [hoveredAtom, setHoveredAtom] = useState<Atom3D | null>(null);
   const [copiedAngle, setCopiedAngle] = useState(false);
+  const [internalColorScheme, setInternalColorScheme] = useState<OrbitalColorScheme>('phase');
+  const [internalSnapToOrbit, setInternalSnapToOrbit] = useState(false);
+
+  const activeColorScheme = orbitalColorScheme || internalColorScheme;
+  const toggleColorScheme = () => {
+    const next = activeColorScheme === 'phase' ? 'quantum_numbers' : 'phase';
+    if (onChangeOrbitalColorScheme) {
+      onChangeOrbitalColorScheme(next);
+    } else {
+      setInternalColorScheme(next);
+    }
+  };
+
+  const activeSnapToOrbit = isSnapToOrbit !== undefined ? isSnapToOrbit : internalSnapToOrbit;
+  const toggleSnapToOrbit = () => {
+    const next = !activeSnapToOrbit;
+    if (onChangeSnapToOrbit) {
+      onChangeSnapToOrbit(next);
+    } else {
+      setInternalSnapToOrbit(next);
+    }
+  };
 
   // Three.js scene refs
   const sceneRef = useRef<THREE.Scene | null>(null);
@@ -614,6 +648,15 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
 
       // Orbital representations for central / key atoms (3D mode only)
       if (!is2D && orbitalMode !== 'none' && (isCentral || atoms.length <= 6) && isIsolatedVisible) {
+        const stdFrame = activeSnapToOrbit
+          ? getStandardizedVSEPRAxes(vsepr?.molecularShape || vsepr?.electronGeometry, vsepr?.hybridization)
+          : null;
+
+        // When Snap-to-Orbit is active on the central atom, render standardized mathematical symmetry axis rays
+        if (activeSnapToOrbit && stdFrame && isCentral) {
+          orbGroup.add(createStandardizedAxesVisualizer(pos, stdFrame, orbitalScale * 2.3));
+        }
+
         if (orbitalMode === 'hybrid' || orbitalMode === 'all') {
           const neighbors = bonds
             .filter((b) => b.sourceIndex === idx || b.targetIndex === idx)
@@ -622,13 +665,19 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
           if (neighbors.length > 0) {
             neighbors.forEach((nIdx) => {
               const neighborAtom = atoms[nIdx];
-              const bondDir = new THREE.Vector3(
+              let bondDir = new THREE.Vector3(
                 neighborAtom.x - atom.x,
                 neighborAtom.y - atom.y,
                 neighborAtom.z - atom.z
               ).normalize();
 
-              const hybridMesh = createHybridOrbitalMesh(pos, bondDir, orbitalScale * 1.05);
+              // Snap bond vector to closest standardized mathematical axis if active
+              if (activeSnapToOrbit && stdFrame && stdFrame.axes.length > 0) {
+                bondDir = snapVectorToStandardizedAxes(bondDir, stdFrame.axes);
+              }
+
+              const hybridType = vsepr?.hybridization?.toLowerCase() || 'sp3';
+              const hybridMesh = createHybridOrbitalMesh(pos, bondDir, orbitalScale * 1.05, false, activeColorScheme, hybridType);
               orbGroup.add(hybridMesh);
             });
           }
@@ -636,33 +685,81 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
           // If lone pairs present (e.g. H2O or NH3), render lone pair rabbit ears
           if (vsepr && vsepr.lonePairs > 0 && isCentral) {
             if (vsepr.lonePairs === 2) {
-              const lpDir1 = new THREE.Vector3(0, 0.7, 0.7).normalize();
-              const lpDir2 = new THREE.Vector3(0, -0.7, 0.7).normalize();
-              orbGroup.add(createHybridOrbitalMesh(pos, lpDir1, orbitalScale * 1.2, true));
-              orbGroup.add(createHybridOrbitalMesh(pos, lpDir2, orbitalScale * 1.2, true));
+              let lpDir1 = new THREE.Vector3(0, 0.7, 0.7).normalize();
+              let lpDir2 = new THREE.Vector3(0, -0.7, 0.7).normalize();
+
+              if (activeSnapToOrbit && stdFrame && stdFrame.axes.length >= 4) {
+                // In standardized tetrahedral geometry, pick the remaining axes not occupied by bonded neighbors
+                const remainingAxes = stdFrame.axes.filter((axis) => {
+                  return !neighbors.some((nIdx) => {
+                    const neighborAtom = atoms[nIdx];
+                    const rawDir = new THREE.Vector3(
+                      neighborAtom.x - atom.x,
+                      neighborAtom.y - atom.y,
+                      neighborAtom.z - atom.z
+                    ).normalize();
+                    const snapped = snapVectorToStandardizedAxes(rawDir, stdFrame.axes);
+                    return snapped.distanceTo(axis) < 0.2;
+                  });
+                });
+                if (remainingAxes.length >= 2) {
+                  lpDir1 = remainingAxes[0];
+                  lpDir2 = remainingAxes[1];
+                } else {
+                  lpDir1 = snapVectorToStandardizedAxes(lpDir1, stdFrame.axes);
+                  lpDir2 = snapVectorToStandardizedAxes(lpDir2, stdFrame.axes);
+                }
+              }
+
+              orbGroup.add(createHybridOrbitalMesh(pos, lpDir1, orbitalScale * 1.2, true, activeColorScheme));
+              orbGroup.add(createHybridOrbitalMesh(pos, lpDir2, orbitalScale * 1.2, true, activeColorScheme));
             } else if (vsepr.lonePairs === 1) {
-              const lpDir = new THREE.Vector3(0, 0, 1).normalize();
-              orbGroup.add(createHybridOrbitalMesh(pos, lpDir, orbitalScale * 1.2, true));
+              let lpDir = new THREE.Vector3(0, 0, 1).normalize();
+
+              if (activeSnapToOrbit && stdFrame && stdFrame.axes.length >= 4) {
+                const remainingAxes = stdFrame.axes.filter((axis) => {
+                  return !neighbors.some((nIdx) => {
+                    const neighborAtom = atoms[nIdx];
+                    const rawDir = new THREE.Vector3(
+                      neighborAtom.x - atom.x,
+                      neighborAtom.y - atom.y,
+                      neighborAtom.z - atom.z
+                    ).normalize();
+                    const snapped = snapVectorToStandardizedAxes(rawDir, stdFrame.axes);
+                    return snapped.distanceTo(axis) < 0.2;
+                  });
+                });
+                if (remainingAxes.length >= 1) {
+                  lpDir = remainingAxes[0];
+                } else {
+                  lpDir = snapVectorToStandardizedAxes(lpDir, stdFrame.axes);
+                }
+              }
+
+              orbGroup.add(createHybridOrbitalMesh(pos, lpDir, orbitalScale * 1.2, true, activeColorScheme));
             }
           }
         }
 
         if (orbitalMode === 'atomic_p') {
-          orbGroup.add(createPOrbitalMesh(pos, 'z', orbitalScale * 1.2));
-          orbGroup.add(createPOrbitalMesh(pos, 'x', orbitalScale * 1.2));
+          orbGroup.add(createPOrbitalMesh(pos, 'z', orbitalScale * 1.2, activeColorScheme));
+          orbGroup.add(createPOrbitalMesh(pos, 'x', orbitalScale * 1.2, activeColorScheme));
+          if (activeSnapToOrbit) {
+            orbGroup.add(createPOrbitalMesh(pos, 'y', orbitalScale * 1.2, activeColorScheme));
+          }
         }
 
         if (orbitalMode === 'atomic_d') {
-          orbGroup.add(createDz2OrbitalMesh(pos, orbitalScale * 1.1));
+          orbGroup.add(createDz2OrbitalMesh(pos, orbitalScale * 1.1, activeColorScheme));
         }
 
         if (orbitalMode === 'pi_delocalized' || orbitalMode === 'all') {
           const isAromatic = bonds.some((b) => b.order === 1.5);
           const hasDouble = bonds.some((b) => b.order === 2);
           if (isAromatic && idx === 0) {
-            orbGroup.add(createDelocalizedPiClouds(pos, 1.45, 0.28));
+            orbGroup.add(createDelocalizedPiClouds(pos, 1.45, 0.28, activeColorScheme));
           } else if (hasDouble && idx === 0) {
-            orbGroup.add(createPOrbitalMesh(pos, 'z', orbitalScale * 1.15));
+            orbGroup.add(createPOrbitalMesh(pos, 'z', orbitalScale * 1.15, activeColorScheme));
           }
         }
       }
@@ -883,6 +980,8 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
     isXRayMode,
     isIsolationMode,
     isDarkBg,
+    activeColorScheme,
+    activeSnapToOrbit,
     updateCameraPosition,
   ]);
 
@@ -1758,6 +1857,96 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
         </div>
       )}
 
+      {/* Quantum Number (n, l, m) Energy Level Legend HUD */}
+      {renderStyle !== '2d_projected' && orbitalMode !== 'none' && activeColorScheme === 'quantum_numbers' && (
+        <div
+          id="quantum-energy-hud"
+          className="absolute right-3 top-14 p-3 rounded-xl bg-slate-900/95 border border-indigo-500/40 shadow-2xl text-xs z-10 w-72 backdrop-blur-md"
+        >
+          <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-1.5 font-bold text-slate-100 text-[11px]">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Quantum Orbitals & Energy Levels</span>
+            </div>
+            <button
+              onClick={toggleColorScheme}
+              className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 font-semibold border border-indigo-500/30 hover:bg-indigo-500/30 transition-colors"
+            >
+              (n, l, m) Active
+            </button>
+          </div>
+
+          <div className="space-y-1.5 text-[10px]">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0" />
+                <strong>s Subshell</strong> (l = 0, ground tier)
+              </span>
+              <span className="font-mono text-emerald-400 font-bold">E₁ (Lowest)</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0" />
+                <strong>p_z Orbital</strong> (l = 1, m = 0)
+              </span>
+              <span className="font-mono text-blue-400 font-bold">E₂</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shrink-0" />
+                <strong>p_x Orbital</strong> (l = 1, m = +1)
+              </span>
+              <span className="font-mono text-purple-400 font-bold">E₂</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <span className="w-2.5 h-2.5 rounded-full bg-indigo-500 shrink-0" />
+                <strong>spⁿ Hybrids</strong> (sp &lt; sp² &lt; sp³)
+              </span>
+              <span className="font-mono text-indigo-300 font-bold">E_hyb</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <span className="w-2.5 h-2.5 rounded-full bg-orange-500 shrink-0" />
+                <strong>Lone Pair</strong> (non-bonding valence)
+              </span>
+              <span className="font-mono text-orange-400 font-bold">E_nb</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-slate-300">
+                <span className="w-2.5 h-2.5 rounded-full bg-fuchsia-500 shrink-0" />
+                <strong>π Molecular Cloud</strong> (Frontier)
+              </span>
+              <span className="font-mono text-fuchsia-400 font-bold">E_π (Highest)</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Snap-to-Orbit Active HUD Badge */}
+      {renderStyle !== '2d_projected' && orbitalMode !== 'none' && activeSnapToOrbit && (
+        <div
+          id="snap-to-orbit-hud"
+          className="absolute left-3 top-14 p-3 rounded-xl bg-slate-900/95 border border-sky-500/50 shadow-2xl text-xs z-10 w-72 backdrop-blur-md"
+        >
+          <div className="flex items-center justify-between mb-1.5">
+            <div className="flex items-center gap-1.5 font-bold text-slate-100 text-[11px]">
+              <Compass className="w-3.5 h-3.5 text-sky-400" />
+              <span>Snap-to-Orbit Active</span>
+            </div>
+            <button
+              onClick={toggleSnapToOrbit}
+              className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 font-semibold border border-sky-500/30 hover:bg-sky-500/30 transition-colors"
+            >
+              Standard Axes
+            </button>
+          </div>
+          <div className="text-[10px] text-slate-300 leading-tight">
+            Orbital lobes snapped to standardized mathematical symmetry axes (<strong className="text-sky-300">{vsepr?.hybridization || 'spⁿ'} {vsepr?.electronGeometry || 'Geometry'} · {vsepr?.idealBondAngle || 109.5}°</strong>) for direct comparative analysis.
+          </div>
+        </div>
+      )}
+
       {/* Hover atom info tooltip */}
       {hoveredAtom && (
         <div className="pointer-events-none absolute bottom-24 right-3 p-2 rounded-xl bg-slate-900/90 border border-slate-700 shadow-lg text-xs z-10 flex items-center gap-2 text-slate-200">
@@ -1821,15 +2010,48 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
               ))}
             </div>
 
-            {/* Orbitals selector */}
-            <div className="flex items-center gap-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 shrink-0">
+            {/* Orbitals selector & Quantum Numbers Color Toggle */}
+            <div className="flex items-center gap-1.5 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60 shrink-0">
               <span className="text-[10px] font-bold uppercase text-slate-400 px-1">Orbitals:</span>
               <button
+                id="dock-orbitals-toggle"
                 onClick={() => onChangeOrbitalMode(orbitalMode === 'none' ? 'hybrid' : orbitalMode === 'hybrid' ? 'pi_delocalized' : orbitalMode === 'pi_delocalized' ? 'all' : 'none')}
                 className="px-2 sm:px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-[10px] sm:text-[11px] transition-colors whitespace-nowrap"
               >
                 {orbitalMode === 'none' ? 'Off' : orbitalMode === 'hybrid' ? 'Hybrid' : orbitalMode === 'pi_delocalized' ? 'π Clouds' : 'All'}
               </button>
+
+              {orbitalMode !== 'none' && (
+                <button
+                  id="quantum-color-toggle"
+                  onClick={toggleColorScheme}
+                  title="Toggle Quantum Numbers (n, l, m) Energy Level Color Coding vs Wavefunction Phase (+ / −)"
+                  className={`px-2 py-1 rounded-lg text-[10px] sm:text-[11px] font-medium transition-all flex items-center gap-1 ${
+                    activeColorScheme === 'quantum_numbers'
+                      ? 'bg-purple-600 text-white shadow-sm ring-1 ring-purple-400 font-semibold'
+                      : 'bg-slate-700/80 text-slate-300 hover:text-white hover:bg-slate-700'
+                  }`}
+                >
+                  <Sparkles className="w-3 h-3 text-amber-300" />
+                  <span>{activeColorScheme === 'quantum_numbers' ? '⚡ (n,l,m) Energy' : '🎨 Phase (+/−)'}</span>
+                </button>
+              )}
+
+              {orbitalMode !== 'none' && (
+                <button
+                  id="snap-to-orbit-dock-toggle"
+                  onClick={toggleSnapToOrbit}
+                  title="Align atomic and hybrid orbital lobes to standardized mathematically ideal axes"
+                  className={`px-2 py-1 rounded-lg text-[10px] sm:text-[11px] font-medium transition-all flex items-center gap-1 ${
+                    activeSnapToOrbit
+                      ? 'bg-sky-600 text-white shadow-sm ring-1 ring-sky-300 font-semibold'
+                      : 'bg-slate-700/80 text-slate-300 hover:text-white hover:bg-slate-700'
+                  }`}
+                >
+                  <Compass className="w-3 h-3 text-sky-300" />
+                  <span>{activeSnapToOrbit ? '📐 Snapped' : '📐 Snap-to-Orbit'}</span>
+                </button>
+              )}
             </div>
 
             {/* Zero-Occlusion Toggles */}

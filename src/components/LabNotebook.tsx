@@ -32,6 +32,7 @@ interface Props {
   activeVibrationalMode: VibrationalMode | null;
   measurement: MeasurementSelection;
   onRestoreSnapshot: (snapshot: LabNoteSnapshot, formula: string) => void;
+  isSnapToOrbit?: boolean;
 }
 
 const STORAGE_KEY = 'orbitalis_lab_notebook_notes';
@@ -44,6 +45,7 @@ export const LabNotebook: React.FC<Props> = ({
   activeVibrationalMode,
   measurement,
   onRestoreSnapshot,
+  isSnapToOrbit,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [notes, setNotes] = useState<LabNoteEntry[]>([]);
@@ -88,6 +90,7 @@ export const LabNotebook: React.FC<Props> = ({
       measurementDistance: measurement.distance,
       measurementAngle: measurement.angle,
       dipoleDebye: properties.estimatedDipoleDebye,
+      isSnapToOrbit,
     };
 
     const newEntry: LabNoteEntry = {
@@ -412,6 +415,11 @@ export const LabNotebook: React.FC<Props> = ({
                     {note.snapshot.measurementAngle && (
                       <span className="px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
                         {note.snapshot.measurementAngle.toFixed(1)}°
+                      </span>
+                    )}
+                    {note.snapshot.isSnapToOrbit && (
+                      <span className="px-1.5 py-0.2 rounded bg-sky-50 text-sky-800 border border-sky-200 font-semibold">
+                        📐 Standard Axes
                       </span>
                     )}
                   </div>

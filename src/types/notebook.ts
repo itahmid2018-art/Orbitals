@@ -9,6 +9,8 @@ export interface LabNoteSnapshot {
   measurementDistance?: number;
   measurementAngle?: number;
   dipoleDebye?: number;
+  isSnapToOrbit?: boolean;
+  orbitalColorScheme?: string;
 }
 
 export interface LabNoteEntry {

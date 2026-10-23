@@ -10,6 +10,7 @@ import {
   Sparkles,
   ExternalLink,
   Flame,
+  Compass,
 } from 'lucide-react';
 
 interface Props {
@@ -18,6 +19,7 @@ interface Props {
   onOpenReactionPredictor: () => void;
   onOpenVseprGuide: () => void;
   onOpenTutorials: () => void;
+  onOpenWalkthrough?: () => void;
   is2DActive: boolean;
   onToggle2D: () => void;
 }
@@ -28,11 +30,13 @@ export const FloatingSidebar: React.FC<Props> = ({
   onOpenReactionPredictor,
   onOpenVseprGuide,
   onOpenTutorials,
+  onOpenWalkthrough,
   is2DActive,
   onToggle2D,
 }) => {
   return (
     <aside
+      id="floating-sidebar"
       aria-label="Quick Features Menu"
       className="fixed left-2 sm:left-3.5 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center gap-1.5 p-1.5 sm:p-2 rounded-2xl bg-slate-900/95 backdrop-blur-md border border-slate-700/80 shadow-2xl text-white select-none transition-all"
     >
@@ -134,11 +138,27 @@ export const FloatingSidebar: React.FC<Props> = ({
         </span>
       </div>
 
+      {/* Interactive Website Walkthrough & Feature Demo */}
+      <div className="relative group">
+        <button
+          id="sidebar-walkthrough-btn"
+          onClick={onOpenWalkthrough}
+          title="Interactive Website Walkthrough & Feature Demo"
+          className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center text-slate-300 hover:text-cyan-300 hover:bg-slate-800 transition-all cursor-pointer"
+        >
+          <Compass className="w-4 h-4 sm:w-5 sm:h-5 text-cyan-400" />
+        </button>
+        <span className="absolute left-12 sm:left-14 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700 text-white text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-all duration-150 shadow-xl z-50">
+          Interactive Walkthrough & Demo (🧭)
+        </span>
+      </div>
+
       <div className="w-6 h-px bg-slate-700/80 my-0.5" />
 
       {/* 2D / 3D Viewing Option Toggle in Studio PBR */}
       <div className="relative group">
         <button
+          id="sidebar-2d-toggle"
           onClick={onToggle2D}
           title={is2DActive ? 'Switch to 3D Quantum View (Studio PBR [Physically-Based Rendering])' : 'Switch to 2D Planar Chemical View (Orthogonal Projection)'}
           className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all cursor-pointer font-bold text-xs ${

@@ -32,6 +32,7 @@ interface Props {
   onBackToWorkbench: () => void;
   onOpenPeriodicTable: () => void;
   onLoadMoleculeIn3D: (formula: string) => void;
+  onOpenWalkthrough?: () => void;
 }
 
 interface FAQItem {
@@ -330,12 +331,88 @@ const FAQ_LIST: FAQItem[] = [
       </div>
     ),
   },
+  {
+    id: 'faq-walkthrough',
+    category: '3D & 2D Canvas',
+    question: 'How does the Interactive Guided Walkthrough work?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          Orbitalis includes an <strong className="text-slate-800">Interactive Guided Walkthrough</strong> that directly spotlights UI elements with an SVG aperture mask, step-by-step contextual tooltips, and live feature triggers.
+        </p>
+        <ul className="list-disc pl-4 space-y-1">
+          <li><strong>Dynamic Guidance:</strong> Unlike static docs, the tour walks through search, 3D interaction gestures, quantum orbital energy levels, bond angle calipers, 2D ChemView, and the floating sidebar.</li>
+          <li><strong>Keyboard & Touch Navigation:</strong> Use arrow keys (←/→) to move between steps, Escape to dismiss, or click the pulsing action buttons to trigger live molecular shifts.</li>
+          <li><strong>Quick Launch:</strong> Open the tour anytime via the <strong className="text-slate-800">Compass icon</strong> on the left floating sidebar or the header banner.</li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    id: 'faq-quantum-orbitals',
+    category: 'Core Chemistry & VSEPR',
+    question: 'What are quantum numbers (n, l, m) and how does the orbital color-coding toggle work?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          Orbitalis provides a real-time <strong className="text-slate-800">Color-Coding Scheme Toggle</strong> for molecular electron clouds:
+        </p>
+        <ul className="list-disc pl-4 space-y-1">
+          <li><strong>Wavefunction Phase Mode (🎨 Phase):</strong> Visualizes quantum mechanical parity (+Ψ Cyan vs -Ψ Amber/Orange), illustrating constructive bonding versus destructive anti-bonding wave interference.</li>
+          <li><strong>Quantum Energy Level Mode (⚡ Quantum n, l, m):</strong> Colors orbitals based on the subshell energy hierarchy according to the Aufbau principle:
+            <ul className="list-disc pl-4 mt-1 space-y-0.5">
+              <li><span className="font-semibold text-emerald-700">1s / 2s ($l=0$):</span> Ground valence sphere (Emerald green).</li>
+              <li><span className="font-semibold text-blue-700">2p ($l=1$):</span> Subshell orbitals partitioned by magnetic number $m$ (Axial $p_z$ blue, in-plane $p_x/p_y$ purple/amber).</li>
+              <li><span className="font-semibold text-cyan-700">Hybrids ($sp, sp^2, sp^3, sp^3d, sp^3d^2$):</span> Directional valence lobes ascending from cyan ($sp$) to cobalt ($sp^3$) and violet ($sp^3d^2$).</li>
+              <li><span className="font-semibold text-orange-700">Lone Pairs ($n_b$):</span> Non-bonding valence electron pairs (Warm amber-orange).</li>
+              <li><span className="font-semibold text-fuchsia-700">Frontier $\pi$ Molecular Clouds:</span> Delocalized conjugated clouds (Vibrant magenta).</li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    id: 'faq-bond-angle',
+    category: '3D & 2D Canvas',
+    question: 'How does the 3D bond angle caliper and distance measurement tool work?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          Click any two atoms on the 3D canvas to measure exact bond length in Angstroms (Å). Select a <strong className="text-slate-800">third atom</strong> to trigger the automated 3D angle caliper:
+        </p>
+        <ul className="list-disc pl-4 space-y-1">
+          <li><strong>Automatic Topological Vertex Detection:</strong> The engine checks chemical bonding topology to automatically designate the shared central atom as the vertex (e.g. Oxygen in $H_2O$).</li>
+          <li><strong>Visual 3D Caliper Overlay:</strong> Renders a glowing radial arc and semi-transparent sector wedge directly in the molecular plane, accompanied by an interactive angle badge.</li>
+          <li><strong>VSEPR Geometry Comparison:</strong> Instantly benchmarks your measured angle against ideal VSEPR geometry (e.g. $104.5^\circ$ bent vs $109.5^\circ$ tetrahedral) and displays deviation ($\Delta\theta$).</li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    id: 'faq-snap-to-orbit',
+    category: 'Core Chemistry & VSEPR',
+    question: 'What is the "Snap-to-Orbit" toggle and how does it aid comparative molecular analysis?',
+    answer: (
+      <div className="space-y-2 text-xs leading-relaxed text-slate-600">
+        <p>
+          The <strong className="text-slate-800">Snap-to-Orbit</strong> toggle (located in both the Orbitals inspector tab and the on-canvas bottom dock) aligns atomic and hybrid orbital lobes to <strong className="text-slate-800">standardized, mathematically ideal symmetry axes</strong>:
+        </p>
+        <ul className="list-disc pl-4 space-y-1">
+          <li><strong>Canonical Symmetry Frames:</strong> Snaps $sp^3$ tetrahedral lobes to exact $109.47^\circ$ canonical $T_d$ vertices, $sp^2$ lobes to pristine $120.0^\circ$ planar triads, $sp$ to $180.0^\circ$ axial lines, and $sp^3d^2$ to $90.0^\circ$ Cartesian $\pm X, \pm Y, \pm Z$ axes.</li>
+          <li><strong>Comparative Geometry Analysis:</strong> In real molecules, lone pairs and steric bulk compress bond angles (e.g. $104.5^\circ$ in Water $H_2O$ vs $107.8^\circ$ in Ammonia $NH_3$). Snap-to-Orbit allows users to toggle between the real conformation and the ideal parent symmetry, making geometric deviations instantly obvious.</li>
+          <li><strong>3D Symmetry Visualizer Rays:</strong> Renders dashed cyan guide rays and vertex target markers in the 3D scene, providing an absolute mathematical reference frame.</li>
+        </ul>
+      </div>
+    ),
+  },
 ];
 
 export const AboutPage: React.FC<Props> = ({
   onBackToWorkbench,
   onOpenPeriodicTable,
   onLoadMoleculeIn3D,
+  onOpenWalkthrough,
 }) => {
   const [faqSearch, setFaqSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
@@ -388,61 +465,21 @@ export const AboutPage: React.FC<Props> = ({
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
-      {/* Top Header / Navigation Bar */}
-      <header className="border-b border-slate-200 bg-white sticky top-0 z-30 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+      {/* Top Header: Minimal with Logo of 'Orbitalis' only */}
+      <header id="about-header" className="border-b border-slate-200 bg-white sticky top-0 z-30 shadow-xs">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <button
-              onClick={onBackToWorkbench}
-              className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors flex items-center gap-1.5 text-xs font-semibold shadow-2xs active:scale-95 cursor-pointer"
-              title="Return to 3D Molecular Workbench (Studio PBR [Physically-Based Rendering])"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span>3D Workbench</span>
-            </button>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-xs">
-                <Atom className="w-5 h-5 animate-[spin_12s_linear_infinite]" />
-              </div>
-              <div>
-                <h1 className="text-base font-bold tracking-tight text-slate-900 leading-tight">
-                  About Orbitalis
-                </h1>
-                <p className="text-[11px] text-slate-500 hidden sm:block">
-                  Project Ideas, Vision, Mission, Features, FAQ & Future Ambitions
-                </p>
-              </div>
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-700 via-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-md shadow-blue-500/25 ring-2 ring-blue-400/20 shrink-0">
+              <Atom className="w-6 h-6 animate-[spin_12s_linear_infinite]" />
             </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={scrollToFaq}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 transition-colors shadow-2xs active:scale-95 cursor-pointer"
-            >
-              <HelpCircle className="w-3.5 h-3.5 text-blue-600" />
-              <span>FAQs</span>
-            </button>
-
-            <button
-              onClick={onOpenPeriodicTable}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-teal-50 hover:bg-teal-100 text-teal-800 border border-teal-200 transition-colors shadow-2xs active:scale-95 cursor-pointer"
-              title="Open full IUPAC (International Union of Pure and Applied Chemistry) Periodic Table"
-            >
-              <Table className="w-3.5 h-3.5 text-teal-600" />
-              <span className="hidden sm:inline">Periodic Table (118 IUPAC)</span>
-              <span className="sm:hidden">Table</span>
-            </button>
-
-            <a
-              href="/amp.html"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 transition-colors shadow-2xs active:scale-95"
-              title="Ultra-fast AMP (Accelerated Mobile Pages) & HTMX (Hypertext Markup Extensions) Edition"
-            >
-              <span className="text-amber-600 font-bold">⚡</span>
-              <span className="hidden sm:inline">AMP & HTMX</span>
-              <span className="sm:hidden">AMP</span>
-            </a>
+            <div>
+              <h1 className="text-xl font-extrabold tracking-tight text-slate-900 leading-tight">
+                Orbitalis
+              </h1>
+              <p className="text-[11px] font-medium text-slate-500 hidden sm:block leading-none mt-0.5">
+                3D Molecular & Quantum Dynamics Workbench
+              </p>
+            </div>
           </div>
         </div>
       </header>
@@ -450,7 +487,7 @@ export const AboutPage: React.FC<Props> = ({
       {/* Main Content Container */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 flex-1 w-full space-y-12">
         {/* Hero Section */}
-        <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white p-8 sm:p-12 shadow-xl border border-slate-700/60">
+        <section id="about-hero" className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white p-8 sm:p-12 shadow-xl border border-slate-700/60">
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
 
@@ -478,6 +515,16 @@ export const AboutPage: React.FC<Props> = ({
                 <FlaskConical className="w-4 h-4" />
                 Launch 3D Workbench
               </button>
+              {onOpenWalkthrough && (
+                <button
+                  id="about-walkthrough-btn"
+                  onClick={onOpenWalkthrough}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-bold text-xs transition-all shadow-md shadow-amber-500/20 active:scale-95 flex items-center gap-2 cursor-pointer"
+                >
+                  <Compass className="w-4 h-4 text-slate-950" />
+                  Interactive Walkthrough
+                </button>
+              )}
               <button
                 onClick={onOpenPeriodicTable}
                 className="px-5 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-600 font-semibold text-xs transition-all active:scale-95 flex items-center gap-2 cursor-pointer"
