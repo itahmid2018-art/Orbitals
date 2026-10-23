@@ -1,0 +1,23 @@
+# Orbitalis Security Policy (RFC 9116)
+# Canonical Specification: https://www.rfc-editor.org/rfc/rfc9116
+
+Contact: mailto:itahmid2018@gmail.com
+Expires: 2027-10-23T00:00:00.000Z
+Preferred-Languages: en
+Canonical: /.well-known/security.txt
+Policy: https://pubchem.ncbi.nlm.nih.gov/docs/privacy
+
+# Authorized External API Origins Whitelist:
+# 1. PubChem REST API (NCBI / NLM / National Institutes of Health):
+#    - https://pubchem.ncbi.nlm.nih.gov
+#    - Purpose: Authoritative 3D molecular structures, conformers, and IUPAC chemical properties
+# 2. Google Fonts Delivery Network:
+#    - https://fonts.googleapis.com
+#    - https://fonts.gstatic.com
+#    - Purpose: Web typography (Inter & JetBrains Mono)
+#
+# CSRF, XSS & Security Architecture:
+# - All user state is client-isolated in memory and standard Web Storage
+# - Zero state-mutating cross-origin operations (safe GET requests only)
+# - Third-party cookies, tracking beacons, and unauthorized proxies are strictly prohibited
+# - Content Security Policy (CSP) actively enforced via HTML meta headers

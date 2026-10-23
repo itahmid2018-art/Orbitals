@@ -4,19 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     
+    <!-- Strict Content Security Policy (CSP) & Origin Whitelist -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob:; connect-src 'self' https://pubchem.ncbi.nlm.nih.gov https://*.ncbi.nlm.nih.gov; object-src 'none'; base-uri 'self'; form-action 'self';"
+    />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
     <!-- Primary Metadata -->
     <title>Orbitalis - 3D Molecular & Quantum Dynamics Workbench</title>
     <meta name="description" content="Interactive 3D molecular structure visualizer with real-time atomic bonding dynamics, complex orbital arrangements, VSEPR geometry, and chemical property calculations." />
-    <!-- Canonical URL resolved dynamically for SPA -->
-    <script>
-      (function() {
-        var link = document.createElement('link');
-        link.rel = 'canonical';
-        link.href = window.location.origin + window.location.pathname;
-        document.head.appendChild(link);
-      })();
-    </script>
-
     <!-- AMP Alternative Link for Instant Mobile Loading -->
     <link rel="amphtml" href="/amp.html" />
     
@@ -75,9 +72,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <!-- HTMX for Faster Load Times & Hypermedia Boost -->
-    <script defer src="/htmx.min.js"></script>
 
     <!-- Schema.org Knowledge Graph (Optimized for AI Search Engines & LLMs) -->
     <script type="application/ld+json">
@@ -141,7 +135,7 @@
     }
     </script>
   </head>
-  <body hx-boost="true">
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

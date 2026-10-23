@@ -722,6 +722,8 @@ export const PeriodicTablePage: React.FC<Props> = ({
             <span>•</span>
             <a href="/amp.html" className="hover:text-blue-600 transition-colors">AMP Edition</a>
             <span>•</span>
+            <a href="/.well-known/security.txt" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">Security Policy</a>
+            <span>•</span>
             <a href="/llms.txt" className="hover:text-blue-600 transition-colors">AI Context (llms.txt)</a>
           </div>
         </div>

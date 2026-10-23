@@ -2,7 +2,7 @@ import { Atom3D, Bond3D, ChemicalProperties } from '../types/chemistry';
 import { calculateChemicalProperties } from './chemistryEngine';
 
 /**
- * Exponential backoff fetch helper following Science Skill requirements
+ * Exponential backoff fetch helper with strict origin isolation and CSRF protection
  */
 async function fetchWithRetry(
   url: string,
@@ -10,9 +10,21 @@ async function fetchWithRetry(
   maxRetries = 2,
   baseDelayMs = 500
 ): Promise<Response> {
+  // Enforce strict security policies on all outbound API requests
+  const secureOptions: RequestInit = {
+    mode: 'cors',
+    credentials: 'omit', // Omit credentials to prevent CSRF / unauthorized cookie transmission
+    referrerPolicy: 'strict-origin-when-cross-origin',
+    ...options,
+    headers: {
+      Accept: 'application/json, text/plain, */*',
+      ...(options.headers || {}),
+    },
+  };
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const response = await fetch(url, options);
+      const response = await fetch(url, secureOptions);
       if (response.ok) return response;
       if ((response.status === 429 || response.status >= 500) && attempt < maxRetries) {
         const retryAfter = Number(response.headers.get('Retry-After'));

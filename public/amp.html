@@ -1,14 +1,21 @@
 <!doctype html>
-<html ⚡ lang="en">
+<html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Orbitalis - Accelerated Mobile Chemistry & 3D Molecular Workbench (AMP)</title>
+    <title>Orbitalis - Accelerated Mobile Chemistry & 3D Molecular Workbench</title>
     <link rel="canonical" href="./" />
     <meta name="viewport" content="width=device-width,minimum-scale=1,initial-scale=1">
     
+    <!-- Strict Content Security Policy (CSP) & Origin Whitelist -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self' data:; img-src 'self' data: blob:; connect-src 'self' https://pubchem.ncbi.nlm.nih.gov https://*.ncbi.nlm.nih.gov; object-src 'none'; base-uri 'self'; form-action 'self';"
+    />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
     <!-- Primary SEO & Discovery Metadata -->
-    <meta name="description" content="Ultra-fast AMP and HTMX mobile edition of Orbitalis: interactive chemistry reference, 118-element IUPAC periodic table, real-time molecular weight calculator, and VSEPR geometry explorer." />
-    <meta name="keywords" content="AMP chemistry, periodic table AMP, HTMX chemistry, molecular weight calculator, 3D molecular visualizer, VSEPR geometry, IUPAC elements, quantum dynamics" />
+    <meta name="description" content="Ultra-fast mobile edition of Orbitalis: interactive chemistry reference, 118-element IUPAC periodic table, real-time molecular weight calculator, and VSEPR geometry explorer." />
+    <meta name="keywords" content="chemistry, periodic table, molecular weight calculator, 3D molecular visualizer, VSEPR geometry, IUPAC elements, quantum dynamics" />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="theme-color" content="#0b1120" />
 
@@ -30,22 +37,14 @@
     <!-- OpenGraph & Twitter Cards -->
     <meta property="og:type" content="website">
     <meta property="og:url" content="/amp.html">
-    <meta property="og:title" content="Orbitalis - Accelerated Mobile Chemistry & 3D Molecular Workbench (AMP)">
-    <meta property="og:description" content="Ultra-fast AMP and HTMX mobile edition of Orbitalis: 118-element IUPAC periodic table, real-time molecular weight calculator, and VSEPR geometry.">
+    <meta property="og:title" content="Orbitalis - Accelerated Mobile Chemistry & 3D Molecular Workbench">
+    <meta property="og:description" content="Ultra-fast mobile edition of Orbitalis: 118-element IUPAC periodic table, real-time molecular weight calculator, and VSEPR geometry.">
     <meta property="og:image" content="/pwa-512x512.png">
     <meta property="og:site_name" content="Orbitalis">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Orbitalis - AMP & HTMX 3D Chemistry Workbench">
+    <meta name="twitter:title" content="Orbitalis - Mobile 3D Chemistry Workbench">
     <meta name="twitter:description" content="Ultra-fast mobile chemistry reference with live molecular mass calculations and IUPAC periodic elements.">
     <meta name="twitter:image" content="/pwa-512x512.png">
-
-    <!-- Google AMP Scripts -->
-    <script async src="https://cdn.ampproject.org/v0.js"></script>
-    <script async custom-element="amp-accordion" src="https://cdn.ampproject.org/v0/amp-accordion-0.1.js"></script>
-    <script async custom-element="amp-bind" src="https://cdn.ampproject.org/v0/amp-bind-0.1.js"></script>
-
-    <!-- AMP Boilerplate Code (Mandatory) -->
-    <style amp-boilerplate>body{-webkit-animation:-amp-start 8s steps(1,end) 0s 1 normal both;-moz-animation:-amp-start 8s steps(1,end) 0s 1 normal both;-ms-animation:-amp-start 8s steps(1,end) 0s 1 normal both;animation:-amp-start 8s steps(1,end) 0s 1 normal both}@-webkit-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-moz-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-ms-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@-o-keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}@keyframes -amp-start{from{visibility:hidden}to{visibility:visible}}</style><noscript><style amp-boilerplate>body{-webkit-animation:none;-moz-animation:none;-ms-animation:none;animation:none}</style></noscript>
 
     <!-- Schema.org Rich Structured Data for AI Crawlers & Search Engines -->
     <script type="application/ld+json">
@@ -771,28 +770,28 @@
         <span>📖</span> Chemistry & Technical Architecture FAQ
       </h2>
       
-      <amp-accordion animate>
-        <section>
-          <header class="accordion-header">How does Orbitalis compute molecular weights & percentages?</header>
+      <div class="faq-container">
+        <details class="faq-item" open>
+          <summary class="accordion-header">How does Orbitalis compute molecular weights & percentages?</summary>
           <div class="accordion-content">
             Orbitalis dynamically sums standard IUPAC atomic weights ($M_w = \sum n_i \times M_i$) for all atoms present in the active 3D coordinate model or formula. Each element's weight contribution and relative mass percentage is computed with up to 4 decimal precision and displayed alongside CPK color swatches.
           </div>
-        </section>
+        </details>
 
-        <section>
-          <header class="accordion-header">What makes AMP & HTMX faster for molecular lookups?</header>
+        <details class="faq-item">
+          <summary class="accordion-header">What makes this mobile edition faster for molecular lookups?</summary>
           <div class="accordion-content">
-            Standard 3D chemistry applications load large Three.js bundles and WebGL shaders before showing data. The AMP and HTMX fast-edition renders core stoichiometric tables, properties, and IUPAC element references in sub-50 milliseconds with zero layout shift (CLS 0.00).
+            Standard 3D chemistry applications load large Three.js bundles and WebGL shaders before showing data. This ultra-fast mobile edition renders core stoichiometric tables, properties, and IUPAC element references in sub-50 milliseconds with zero layout shift (CLS 0.00).
           </div>
-        </section>
+        </details>
 
-        <section>
-          <header class="accordion-header">Which operating systems and devices are supported?</header>
+        <details class="faq-item">
+          <summary class="accordion-header">Which operating systems and devices are supported?</summary>
           <div class="accordion-content">
             Orbitalis includes responsive vector icons and PWA configurations for Android (maskable squircle icons), iOS (Apple touch icons and WebApp status styling), macOS Safari (vector pinned tab masks), and Windows 10/11 (Modern Tile XML).
           </div>
-        </section>
-      </amp-accordion>
+        </details>
+      </div>
     </main>
 
     <!-- Footer -->

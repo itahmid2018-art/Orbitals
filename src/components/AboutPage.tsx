@@ -1040,6 +1040,8 @@ export const AboutPage: React.FC<Props> = ({
             <span>•</span>
             <a href="/amp.html" className="hover:text-blue-600">AMP Edition</a>
             <span>•</span>
+            <a href="/.well-known/security.txt" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600">Security Policy</a>
+            <span>•</span>
             <a href="/llms.txt" className="hover:text-blue-600">AI Spec (llms.txt)</a>
           </div>
         </div>

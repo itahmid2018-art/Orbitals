@@ -3,7 +3,6 @@
 
 User-agent: *
 Allow: /
-Disallow: /api/proxy/
 
 # Explicitly enable AI Search Agents & LLM Grounding Crawlers
 User-agent: GPTBot
@@ -30,6 +29,11 @@ Allow: /
 # Sitemap & LLM Knowledge Files
 Sitemap: /sitemap.xml
 Sitemap: /amp.html
+
+# Security Policy (RFC 9116)
+# https://www.rfc-editor.org/rfc/rfc9116
+# Defines authorized origins, API whitelist, and security contacts
+# /.well-known/security.txt
 
 # AI Machine-Readable Specification
 # https://llmstxt.org/
