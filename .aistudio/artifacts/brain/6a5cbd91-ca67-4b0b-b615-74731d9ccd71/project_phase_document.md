@@ -24,6 +24,7 @@ This document provides a complete phase-wise review of the **Orbitalis** 3D Mole
 | **12** | **Periodic Table Footer Relocation & Prominent Orbitalis Logo Across All Pages**<br>In the "Periodic table" page, keep the "About", "All 118 Elements (Complete IUPAC [International Union of Pure and Applied Chemistry]) Interactive chemical properties, electron configurations, and quantum periodic trends" to the footer, and ensure the "Orbitalis" Logo is prominent across all pages. | **COMPLETED** | - `src/components/PeriodicTablePage.tsx`: Relocated the "About" button, "All 118 Elements (Complete IUPAC)" badge, and "Interactive chemical properties, electron configurations, and quantum periodic trends" subtitle from the top header to a dedicated, responsive footer (`#periodic-table-footer`).<br>- **Prominent Orbitalis Logo Across All Pages**: Unified brand identity across `Header.tsx` (Workbench), `AboutPage.tsx` (About Landing Page), and `PeriodicTablePage.tsx` (Periodic Table) with high-contrast gradient emblem (`w-10 h-10`, `from-blue-700 via-blue-600 to-cyan-500`, animated spin atom icon), bold `text-xl font-extrabold tracking-tight text-slate-900` typography, and standard subtitle. |
 | **13** | **Security Audit & Resolution of "Suspicious Behaviour" Publishing Flag**<br>Investigate and resolve publishing failure caused by automated "Suspicious Behaviour" security scanner checks. | **COMPLETED** | - **Removed Unverified Static Binary**: Deleted `public/htmx.min.js` (51KB unverified static minified script containing `eval()` and XHR/DOM interception) and removed `<script defer src="/htmx.min.js">` & `<body hx-boost="true">` from `index.html`.<br>- **Eliminated Dynamic Head Script**: Replaced inline script dynamically manipulating `<head>` with clean static tags, eliminating heuristic "DOM injection" warnings.<br>- **Removed Suspicious Proxy Directive**: Cleared `Disallow: /api/proxy/` from `public/robots.txt` which triggered open proxy / SSRF security scanner flags.<br>- **Sanitized Mobile Companion Page**: Removed external remote scripts (`cdn.ampproject.org`) from `public/amp.html`, converting it into a 100% self-contained HTML5 page using native `<details>`/`<summary>` elements; deleted redundant root `/amp.html`.<br>- **Dependency Pruning**: Removed unused `express` backend and `htmx.org` packages from `package.json`.<br>- **Verification**: Full `tsc --noEmit` and production `vite build` completed cleanly with exit code 0. |
 | **14** | **Security Policy Configuration (`security.txt`), CSP Metadata & Authorized Origin Whitelist**<br>Create security policy configuration files and CSP metadata to define authorized API origins and prevent cross-site request forgery, addressing "Suspicious Behaviour" flags by explicitly whitelisting PubChem and internal domains. | **COMPLETED** | - **RFC 9116 `security.txt`**: Created standard `public/.well-known/security.txt` and `public/security.txt` defining security contact, policy, and authorized API origins.<br>- **Strict CSP Metadata Block**: Added `<meta http-equiv="Content-Security-Policy">` to `index.html` and `public/amp.html` enforcing `default-src 'self'`, `object-src 'none'`, and explicitly whitelisting PubChem (`https://pubchem.ncbi.nlm.nih.gov` & `https://*.ncbi.nlm.nih.gov`) and Google Fonts.<br>- **CSRF & Credential Isolation**: Hardened `fetchWithRetry` in `src/services/pubchemService.ts` with `credentials: 'omit'`, `mode: 'cors'`, and `referrerPolicy: 'strict-origin-when-cross-origin'` to prevent cross-site request forgery.<br>- **Discovery Links**: Linked security specification across `robots.txt`, `AboutPage.tsx` footer, and `PeriodicTablePage.tsx` footer. |
+| **15** | **Product Strategy, GTM Documentation & Diverse User Testing Protocol**<br>Create `/docs` directory with Google PM Go-To-Market plan (TAM/SAM/SOM, target audience, 10x moat, pricing tiers, marketing channels) and step-by-step user testing focus group strategy plan with demographic diversity sampling and psychometric metrics. | **COMPLETED** | - `/docs/GTM_STRATEGY.md`: Market sizing ($14.2B TAM / $3.8B SAM / $420M SOM), 4 persona profiles, Google product philosophy ("10x Better" Moat), Product-Led Growth (PLG) viral loops, 3-tier monetization model, multi-channel marketing, and OKRs.<br>- `/docs/USER_TESTING_AND_FOCUS_GROUP_PLAN.md`: $N=60$ stratified demographic diversity sampling matrix (Ages 15–65, 50% female/non-binary in STEM, Title I schools, colorblind inclusivity quotas), 5 hands-on task scenarios with Think-Aloud protocol, SUS/SEQ/NASA-TLX metrics, and severity triage SLAs.<br>- `/docs/README.md`: Index navigation hub linking all product research documents; linked from root `README.md`. |
 
 ---
 
@@ -140,7 +141,34 @@ This document provides a complete phase-wise review of the **Orbitalis** 3D Mole
 
 ---
 
-### Phase 8: Near-Term Active To-Do Features (READY TO IMPLEMENT)
+### Phase 8: Export to Vector SVG for Research Papers (COMPLETED)
+- **Precise 3D-to-2D Perspective Projection Engine**:
+  - Mathematically projects real-time 3D camera orientation, zoom, and perspective into a clean 2D vector canvas (`src/services/svgExporter.ts`).
+  - Orthogonal screen radius projection preserving ball-and-stick proportions across any camera angle.
+- **Painter's Algorithm Depth-Sorting**:
+  - Accurate depth-sorting of all atoms, covalent bonds, and measurement badges based on normalized device coordinate ($z_{\text{ndc}}$) values.
+  - Background elements are drawn first, cleanly occluded by foreground atoms and bonds without clipping artifacts.
+- **Covalent Bond Topology & Boundary Clipping**:
+  - Clean boundary clipping at atom sphere boundaries preventing line bleeding.
+  - Full multi-bond rendering (single cylinder, double parallel lines, triple lines, and dashed aromatic bonds).
+  - Two-tone split bonds reflecting adjacent atom CPK colors meeting at bond midpoints.
+- **Peer-Reviewed Journal Style Presets**:
+  - **Publication CPK**: Radial specular gradients, subtle drop shadows, and CPK colors tailored for high-impact journals (Nature Chemistry, JACS, Science).
+  - **Print Grayscale (Monochrome)**: High-contrast black outlines and pure white fills for monochrome journal printing without color ink bleeding.
+  - **Textbook 2D**: Flat CPK discs with centered high-contrast chemical symbols (`H`, `C`, `N`, `O`, etc.) for lecture slides and course notes.
+  - **Dark Presentation**: Radiant glowing CPK spheres for keynote presentations and dark theme documents.
+- **Interactive Export Dialog (`src/components/SvgExportModal.tsx`)**:
+  - Real-time vector SVG preview and raw SVG XML code inspector with file size indicator.
+  - Customizable background: Transparent (standard for vector drag-and-drop into LaTeX, Word, and Adobe Illustrator), Paper White, Dark Slate.
+  - Vector resolution selector: 800×800 (Compact), 1200×1200 (Standard), 2000×2000 (Ultra 4K Vector).
+  - Toggles for chemical element symbols, spectral atom indices (#1, #2...), 3D distance/angle measurements, and citation legend.
+  - 1-click "Download .SVG" and "Copy SVG Code" actions.
+- **Integrated Canvas Toolbar**:
+  - Quick-access `#export-svg-btn` button embedded directly in the 3D molecular canvas top-right action bar next to the camera snapshot tool.
+
+---
+
+### Phase 9: Near-Term Active To-Do Features (READY TO IMPLEMENT)
 
 1. **PDB / Mol / SDF File Drag-and-Drop Importer**:
    - Allow drag-and-drop or file upload of standard `.pdb`, `.mol`, `.sdf`, and `.xyz` molecular structure files directly onto the canvas.
@@ -155,7 +183,7 @@ This document provides a complete phase-wise review of the **Orbitalis** 3D Mole
 
 ---
 
-### Phase 9: Recommended Strategic Features & Innovation Roadmap (FUTURE PHASES)
+### Phase 10: Recommended Strategic Features & Innovation Roadmap (FUTURE PHASES)
 
 #### 9.1 Advanced Quantum & Computational Chemistry
 - **HOMO / LUMO Frontier Orbital Surfaces**:

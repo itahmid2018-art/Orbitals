@@ -285,5 +285,14 @@ npm run lint
 
 ---
 
+## 📚 Product Strategy & Research Documentation
+
+Comprehensive product commercialization and user research frameworks are available in the [`/docs`](/docs) directory:
+- **[Go-To-Market (GTM) Strategy](/docs/GTM_STRATEGY.md)**: Google PM commercialization framework, $14.2B TAM / $3.8B SAM market sizing, 10x product moat, academic PLG growth loops, freemium & campus licensing tiers, and OKRs.
+- **[User Testing & Focus Group Strategy Plan](/docs/USER_TESTING_AND_FOCUS_GROUP_PLAN.md)**: Mixed-methods usability study protocol ($N=60$), stratified demographic sampling (Ages 15–65, Title I schools, colorblind inclusivity quotas), 5 hands-on task scenarios, and psychometric evaluation (SUS, SEQ, NASA-TLX).
+- **[Documentation Index](/docs/README.md)**: Overview and navigation hub for all product strategy assets.
+
+---
+
 ## 📄 License
 This project is licensed under the Apache-2.0 License.

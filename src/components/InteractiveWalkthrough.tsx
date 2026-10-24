@@ -125,12 +125,12 @@ export const InteractiveWalkthrough: React.FC<Props> = ({
       },
       {
         id: 'canvas',
-        badge: 'Step 3 of 8 · 3D Interactive Viewport',
-        title: 'Photorealistic Studio PBR 3D Canvas',
+        badge: 'Step 3 of 8 · 3D Interactive Viewport & SVG Export',
+        title: 'Photorealistic Studio PBR 3D Canvas & Vector SVG',
         description:
-          'Explore molecules with physically-based materials (PBR) and ACES Filmic tonemapping. Left-click and drag to orbit, right-click to rotate, and mouse scroll to zoom. Zooming is strictly isolated to the 3D viewer without scrolling the webpage!',
-        tip: 'Use the bottom cinema dock to switch representations (Ball & Stick, Space-Filling vdW, Stick, Wireframe, ESP Map).',
-        targetSelector: '#canvas-container',
+          'Explore molecules with physically-based materials (PBR) and ACES Filmic tonemapping. Left-click and drag to orbit, right-click to rotate, and mouse scroll to zoom. Export publication-quality 2D vector SVGs with Painter depth sorting and custom paper styles using the SVG button!',
+        tip: 'Click the "SVG" button in the top-right canvas toolbar to export lossless 2D vector figures for LaTeX, Word, and Nature/Science journals.',
+        targetSelector: '#export-svg-btn, #canvas-container',
         preferredPlacement: 'top',
         actionLabel: 'Center View & Load Methane (CH₄)',
         actionIcon: <Eye className="w-3.5 h-3.5 text-cyan-400" />,

@@ -498,6 +498,9 @@ export default function App() {
               measurement={measurement}
               onSelectAtom={handleSelectAtom}
               onClearMeasurement={handleClearMeasurement}
+              moleculeName={properties?.name}
+              chemicalFormula={properties?.formula || currentFormula}
+              iupacName={properties?.iupacName}
             />
           </div>
 

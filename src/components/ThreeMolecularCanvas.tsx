@@ -43,7 +43,9 @@ import {
   Copy,
   Check,
   Compass,
+  FileCode,
 } from 'lucide-react';
+import { SvgExportModal } from './SvgExportModal';
 
 interface Props {
   atoms: Atom3D[];
@@ -70,6 +72,9 @@ interface Props {
   onChangeOrbitalColorScheme?: (scheme: OrbitalColorScheme) => void;
   isSnapToOrbit?: boolean;
   onChangeSnapToOrbit?: (snap: boolean) => void;
+  moleculeName?: string;
+  chemicalFormula?: string;
+  iupacName?: string;
 }
 
 // Helper to generate 2D planar circular atom tokens with high-contrast chemical symbols
@@ -284,6 +289,9 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
   onChangeOrbitalColorScheme,
   isSnapToOrbit,
   onChangeSnapToOrbit,
+  moleculeName,
+  chemicalFormula,
+  iupacName,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -300,6 +308,7 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
   const [copiedAngle, setCopiedAngle] = useState(false);
   const [internalColorScheme, setInternalColorScheme] = useState<OrbitalColorScheme>('phase');
   const [internalSnapToOrbit, setInternalSnapToOrbit] = useState(false);
+  const [isSvgModalOpen, setIsSvgModalOpen] = useState(false);
 
   const activeColorScheme = orbitalColorScheme || internalColorScheme;
   const toggleColorScheme = () => {
@@ -1669,6 +1678,17 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
         </button>
 
         <button
+          id="export-svg-btn"
+          onClick={() => setIsSvgModalOpen(true)}
+          title="Export Vector SVG (Research Papers)"
+          aria-label="Export Vector SVG for Research Papers"
+          className="p-1 sm:p-1.5 rounded-lg hover:bg-blue-600/30 text-blue-300 hover:text-white transition-all flex items-center gap-1 border border-blue-500/20 hover:border-blue-500/50"
+        >
+          <FileCode className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-400" />
+          <span className="text-[10px] font-bold hidden sm:inline text-blue-300">SVG</span>
+        </button>
+
+        <button
           onClick={toggleFullscreen}
           title={isFullscreen ? 'Exit Full-Screen Focus (Esc)' : 'Full-Screen Focus Mode'}
           aria-label={isFullscreen ? 'Exit Full-Screen Focus' : 'Full-Screen Focus Mode'}
@@ -2094,6 +2114,21 @@ export const ThreeMolecularCanvas: React.FC<Props> = ({
           </div>
         )}
       </div>
+
+      {/* Research Paper Vector SVG Export Modal */}
+      <SvgExportModal
+        isOpen={isSvgModalOpen}
+        onClose={() => setIsSvgModalOpen(false)}
+        atoms={atoms}
+        bonds={bonds}
+        camera={cameraRef.current}
+        moleculeGroup={moleculeGroupRef.current}
+        vsepr={vsepr}
+        measurement={measurement}
+        moleculeName={moleculeName}
+        chemicalFormula={chemicalFormula}
+        iupacName={iupacName}
+      />
     </div>
   );
 };
